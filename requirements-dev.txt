@@ -2,11 +2,11 @@
 -r requirements.txt
 pre-commit==4.7.0
 black==26.10.1
-isort==5.13.2
+isort==9.0.2
 flake8==7.5.0
 flake8-bugbear==26.11.22
 # Type checking
-mypy==1.19.1
+mypy==2.4.1
 django-stubs==5.2.9
 django-stubs-ext==5.2.9
 djangorestframework-stubs==3.16.9
