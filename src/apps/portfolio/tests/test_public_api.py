@@ -8,6 +8,7 @@ from .base import SEED_DATA, SeedTestCase, seed
 
 
 class PortfolioApiTests(SeedTestCase):
+    @override_settings(PUBLIC_URL="")
     def test_portfolio_endpoint_returns_absolute_media_urls(self):
         seed()
         data = self.client.get("/api/portfolio/").json()

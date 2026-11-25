@@ -38,7 +38,7 @@ jobs:
           cache-dependency-path: requirements-dev.txt
 
       - name: Install pre-commit
-        run: pip install "pre-commit==4.0.1"
+        run: pip install "pre-commit==4.7.0"
 
       - name: Cache pre-commit environments
         uses: actions/cache@v6
