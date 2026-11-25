@@ -28,7 +28,7 @@ repos:
         args: [--fix=lf]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 9.0.2
     hooks:
       - id: isort
         name: isort (import order)
@@ -50,7 +50,7 @@ repos:
         exclude: /migrations/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v2.4.1
     hooks:
       - id: mypy
         name: mypy (types)
