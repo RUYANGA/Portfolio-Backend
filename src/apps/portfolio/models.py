@@ -181,6 +181,19 @@ class Certification(Ordered):
         return self.name
 
 
+class ContactSubject(Ordered):
+    """A subject visitors pick from in the contact form, so messages arrive already sorted."""
+
+    label = models.CharField(max_length=120, unique=True)
+    is_active = models.BooleanField(default=True, help_text="Only active subjects are offered on the site.")
+
+    class Meta(Ordered.Meta):
+        pass
+
+    def __str__(self):
+        return self.label
+
+
 class ContactMessage(models.Model):
     name = models.CharField(max_length=120)
     email = models.EmailField()

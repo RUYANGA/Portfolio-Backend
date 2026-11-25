@@ -13,6 +13,7 @@ router.register("experiences", views.ExperienceAdminViewSet, basename="admin-exp
 router.register("projects", views.ProjectAdminViewSet, basename="admin-projects")
 router.register("education", views.EducationAdminViewSet, basename="admin-education")
 router.register("certifications", views.CertificationAdminViewSet, basename="admin-certifications")
+router.register("contact-subjects", views.ContactSubjectAdminViewSet, basename="admin-contact-subjects")
 router.register("messages", views.ContactMessageAdminViewSet, basename="admin-messages")
 
 urlpatterns = [

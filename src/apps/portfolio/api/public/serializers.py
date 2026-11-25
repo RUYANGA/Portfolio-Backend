@@ -6,6 +6,7 @@ from apps.portfolio.media import absolute
 from apps.portfolio.models import (
     Certification,
     ContactMessage,
+    ContactSubject,
     Education,
     Experience,
     Profile,
@@ -151,6 +152,18 @@ class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
         fields = ["name", "email", "subject", "message", "website"]
+
+    def validate_subject(self, value):
+        """When subjects are set up, the visitor must pick one of the active ones."""
+        value = value.strip()
+        choices = list(ContactSubject.objects.filter(is_active=True).values_list("label", flat=True))
+        if not choices:
+            return value
+        if not value:
+            raise serializers.ValidationError("Choose a subject.")
+        if value not in choices:
+            raise serializers.ValidationError("Choose one of the subjects in the list.")
+        return value
 
     def validate_message(self, value):
         if len(value.strip()) < 10:

@@ -11,7 +11,7 @@ Modes:
 
 Records are matched on a natural key, so re-running never creates duplicates:
 profile (the single record), social link label, skill group name, role + company,
-project slug, degree, and certification name.
+project slug, degree, certification name, and contact subject label.
 """
 
 import json
@@ -23,9 +23,18 @@ from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from apps.portfolio.models import Certification, Education, Experience, Profile, Project, SkillGroup, SocialLink
+from apps.portfolio.models import (
+    Certification,
+    ContactSubject,
+    Education,
+    Experience,
+    Profile,
+    Project,
+    SkillGroup,
+    SocialLink,
+)
 
-CONTENT_MODELS = (SocialLink, Profile, SkillGroup, Experience, Project, Education, Certification)
+CONTENT_MODELS = (SocialLink, Profile, SkillGroup, Experience, Project, Education, Certification, ContactSubject)
 
 PROFILE_FIELDS = (
     "name",
@@ -91,6 +100,7 @@ class Command(BaseCommand):
             self.seed_projects()
             self.seed_education()
             self.seed_certifications()
+            self.seed_contact_subjects()
 
         self.report()
 
@@ -198,6 +208,10 @@ class Command(BaseCommand):
                 },
                 files={"image": c.get("image")},
             )
+
+    def seed_contact_subjects(self):
+        for i, label in enumerate(self.data.get("contact_subjects", [])):
+            self._upsert(ContactSubject, "contact subjects", {"label": label}, {"is_active": True, "order": i})
 
     # ---------- Helpers ----------
 

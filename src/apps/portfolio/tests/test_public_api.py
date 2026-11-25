@@ -2,7 +2,7 @@
 
 from django.test import override_settings
 
-from apps.portfolio.models import Profile
+from apps.portfolio.models import ContactMessage, ContactSubject, Profile
 
 from .base import SEED_DATA, SeedTestCase, seed
 
@@ -44,3 +44,35 @@ class MediaFramingTests(SeedTestCase):
         self.assertEqual(media.status_code, 200)
         self.assertNotIn("X-Frame-Options", media.headers)
         self.assertEqual(self.client.get("/api/portfolio/").headers.get("X-Frame-Options"), "DENY")
+
+
+class ContactSubjectTests(SeedTestCase):
+    def setUp(self):
+        super().setUp()
+        seed()
+
+    def post(self, **fields):
+        body = {"name": "Ada", "email": "ada@example.com", "message": "I would like to talk about a backend role."}
+        body.update(fields)
+        return self.client.post("/api/contact/", body, content_type="application/json")
+
+    def test_seed_loads_the_subjects_and_the_site_receives_them(self):
+        subjects = self.client.get("/api/portfolio/").json()["contact_subjects"]
+        self.assertEqual(subjects, SEED_DATA["contact_subjects"])
+
+    def test_inactive_subjects_are_not_offered(self):
+        ContactSubject.objects.filter(label="Other").update(is_active=False)
+        self.assertNotIn("Other", self.client.get("/api/portfolio/").json()["contact_subjects"])
+
+    def test_a_listed_subject_is_accepted(self):
+        res = self.post(subject="Full-time job opportunity")
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(ContactMessage.objects.get().subject, "Full-time job opportunity")
+
+    def test_a_typed_or_missing_subject_is_rejected(self):
+        self.assertEqual(self.post(subject="anything I like").status_code, 400)
+        self.assertIn("subject", self.post(subject="").json())
+
+    def test_any_subject_is_accepted_when_none_are_set_up(self):
+        ContactSubject.objects.all().delete()
+        self.assertEqual(self.post(subject="Hello").status_code, 201)
