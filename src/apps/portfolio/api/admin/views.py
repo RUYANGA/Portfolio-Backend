@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from apps.portfolio.models import (
     Certification,
     ContactMessage,
+    ContactSubject,
     Education,
     Experience,
     Profile,
@@ -22,6 +23,7 @@ from .auth import AdminAPIView, ExpiringTokenAuthentication
 from .serializers import (
     CertificationAdminSerializer,
     ContactMessageAdminSerializer,
+    ContactSubjectAdminSerializer,
     EducationAdminSerializer,
     ExperienceAdminSerializer,
     ProfileAdminSerializer,
@@ -129,6 +131,11 @@ class EducationAdminViewSet(AdminViewSet):
 class CertificationAdminViewSet(AdminViewSet):
     queryset = Certification.objects.all()
     serializer_class = CertificationAdminSerializer
+
+
+class ContactSubjectAdminViewSet(AdminViewSet):
+    queryset = ContactSubject.objects.all()
+    serializer_class = ContactSubjectAdminSerializer
 
 
 class ContactMessageAdminViewSet(

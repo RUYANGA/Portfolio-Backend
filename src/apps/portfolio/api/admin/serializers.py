@@ -11,6 +11,7 @@ from apps.portfolio.media import absolute
 from apps.portfolio.models import (
     Certification,
     ContactMessage,
+    ContactSubject,
     Education,
     Experience,
     Profile,
@@ -162,6 +163,12 @@ class CertificationAdminSerializer(FileCleanupMixin, serializers.ModelSerializer
     class Meta:
         model = Certification
         fields = ["id", "name", "issuer", "year", "credential_url", "image", "order"]
+
+
+class ContactSubjectAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactSubject
+        fields = ["id", "label", "is_active", "order"]
 
 
 class ContactMessageAdminSerializer(serializers.ModelSerializer):

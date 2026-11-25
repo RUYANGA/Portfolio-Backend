@@ -366,5 +366,20 @@
       "credential_url": "https://intranet.alxswe.com/certificates/5LspmcrB32",
       "image": "certificates/alx.jpg"
     }
+  ],
+  "contact_subjects": [
+    "Full-time job opportunity",
+    "Contract or freelance project",
+    "Backend or API development",
+    "Full-stack web application",
+    "System design or architecture review",
+    "Database design or optimization",
+    "Cloud deployment and DevOps",
+    "AI or LLM integration",
+    "Technical consulting",
+    "Collaboration or partnership",
+    "Mentoring, speaking or interview",
+    "General question",
+    "Other"
   ]
 }

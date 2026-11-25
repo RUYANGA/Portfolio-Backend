@@ -10,7 +10,15 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.portfolio.models import Certification, Education, Experience, Profile, Project, SkillGroup
+from apps.portfolio.models import (
+    Certification,
+    ContactSubject,
+    Education,
+    Experience,
+    Profile,
+    Project,
+    SkillGroup,
+)
 
 from .serializers import (
     CertificationSerializer,
@@ -39,6 +47,7 @@ class PortfolioView(APIView):
                 "projects": ProjectSerializer(Project.objects.all(), many=True, context=ctx).data,
                 "education": EducationSerializer(Education.objects.all(), many=True).data,
                 "certifications": CertificationSerializer(Certification.objects.all(), many=True, context=ctx).data,
+                "contact_subjects": list(ContactSubject.objects.filter(is_active=True).values_list("label", flat=True)),
             }
         )
 
