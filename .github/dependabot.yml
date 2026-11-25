@@ -24,6 +24,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "django-stubs*"
         update-types: ["version-update:semver-major"]
+      # 3.17+ requires django-stubs 6 (Django 6).
+      - dependency-name: "djangorestframework-stubs"
+        versions: [">=3.17"]
 
   - package-ecosystem: github-actions
     directory: "/"
