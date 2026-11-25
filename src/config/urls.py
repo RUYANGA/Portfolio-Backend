@@ -1,11 +1,13 @@
 from django.conf import settings
 from django.contrib import admin
 from django.http import FileResponse, HttpRequest
-from django.urls import URLPattern, URLResolver, path, re_path
+from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.static import serve
 
-urlpatterns: list[URLPattern | URLResolver] = []
+urlpatterns: list[URLPattern | URLResolver] = [
+    path("api/", include("apps.portfolio.api.public.urls")),
+]
 
 # The admin dashboard is the Next.js app at /admin. Django's own admin stays available
 # for emergencies only when DJANGO_ADMIN_ENABLED=true.
