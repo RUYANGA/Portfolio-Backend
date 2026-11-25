@@ -9,4 +9,4 @@ flake8-bugbear==26.11.22
 mypy==1.19.1
 django-stubs==5.2.9
 django-stubs-ext==5.2.9
-djangorestframework-stubs==3.16.9
+djangorestframework-stubs==3.18.2
