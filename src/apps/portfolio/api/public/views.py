@@ -1,6 +1,7 @@
 """Public API: portfolio content, contact form, health check."""
 
 import logging
+import os
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -102,7 +103,10 @@ class ContactView(APIView):
 
 
 class HealthView(APIView):
-    """Liveness/readiness probe for Docker and uptime monitors: checks the database too."""
+    """
+    Liveness/readiness probe for Docker and uptime monitors: checks the database too.
+    `version` is the commit the running image was built from, to confirm a deploy picked it up.
+    """
 
     def get(self, request):
         from django.db import connection
@@ -112,4 +116,4 @@ class HealthView(APIView):
                 cursor.execute("SELECT 1")
         except Exception:  # noqa: BLE001 - any DB failure means not ready
             return Response({"status": "error", "database": "unreachable"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        return Response({"status": "ok"})
+        return Response({"status": "ok", "version": os.getenv("APP_VERSION", "dev")[:12]})

@@ -1,5 +1,8 @@
 """Public API used by the site."""
 
+import os
+from unittest import mock
+
 from django.test import override_settings
 
 from apps.portfolio.models import ContactMessage, ContactSubject, Profile
@@ -25,7 +28,11 @@ class DeploymentTests(SeedTestCase):
     def test_health_endpoint_checks_the_database(self):
         res = self.client.get("/api/health/")
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {"status": "ok"})
+        self.assertEqual(res.json()["status"], "ok")
+
+    def test_health_endpoint_reports_the_running_version(self):
+        with mock.patch.dict(os.environ, {"APP_VERSION": "307c316abcdef0123456"}):
+            self.assertEqual(self.client.get("/api/health/").json()["version"], "307c316abcde")
 
     def test_media_links_use_public_url_when_set(self):
         seed()
