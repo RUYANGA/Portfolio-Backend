@@ -1,0 +1,166 @@
+# CI/CD for the portfolio API (this repository).
+#
+# Pull requests:         lint (pre-commit: black, isort, flake8, mypy + hygiene) → tests on PostgreSQL
+#                         → Docker build (not pushed).
+# Merge (push) to main:   the same checks, then build the image and push it to Docker Hub.
+#
+# Repository settings needed (Settings → Secrets and variables → Actions):
+#   Secrets:   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN (a Docker Hub access token, Read & Write)
+#   Variable:  DOCKERHUB_REPOSITORY (optional, default: <DOCKERHUB_USERNAME>/merci-portfolio-api)
+
+name: CI
+
+on:
+  # Every pull request, including stacked PRs that target another feature branch.
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run per branch/PR at a time; a newer push cancels the older run (never on main).
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint:
+    name: Lint (pre-commit · black · isort · flake8 · mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install pre-commit
+        run: pip install "pre-commit==4.0.1"
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run all hooks
+        run: pre-commit run --all-files --show-diff-on-failure --color always
+
+  test:
+    name: Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: portfolio
+          POSTGRES_USER: portfolio
+          POSTGRES_PASSWORD: portfolio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U portfolio -d portfolio"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://portfolio:portfolio@localhost:5432/portfolio
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Django system checks
+        run: python manage.py check --fail-level WARNING
+
+      - name: Migrations are up to date
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        run: python manage.py test apps --verbosity 2
+
+      - name: Production settings refuse a placeholder secret
+        run: |
+          if DJANGO_SETTINGS_MODULE=config.settings.production DJANGO_SECRET_KEY=change-me \
+             python manage.py check 2>/dev/null; then
+            echo "::error::Production settings accepted a placeholder secret key"; exit 1
+          fi
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 20
+    env:
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image name
+        id: image
+        env:
+          REPOSITORY: ${{ vars.DOCKERHUB_REPOSITORY }}
+          USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: echo "name=${REPOSITORY:-${USERNAME:-local}/merci-portfolio-api}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.title=merci-portfolio-api
+            org.opencontainers.image.description=Django API for the Merci Ruyanga portfolio
+
+      - name: Build${{ env.PUSH == 'true' && ' and push' || ' (no push on pull requests)' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ env.PUSH == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Summary
+        if: env.PUSH == 'true'
+        run: |
+          {
+            echo "### Pushed to Docker Hub"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo "Deploy on the server: \`docker compose pull api && docker compose up -d --no-build\`"
+          } >> "$GITHUB_STEP_SUMMARY"
