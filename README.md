@@ -81,17 +81,26 @@ Run the type checker on its own with `mypy` (it reads `pyproject.toml`).
 
 ## CI/CD (GitHub Actions)
 
-`.github/workflows/ci.yml` runs on every pull request to `main` and on every merge to `main`:
+Two workflows in `.github/workflows/`:
+
+**`ci.yml` – every pull request** (no credentials, nothing published)
 
 | Job | What it does |
 |---|---|
 | **Lint** | All pre-commit hooks: Black, isort, Flake8, mypy and the hygiene checks |
 | **Tests** | Django checks, migrations up to date, the test suite on PostgreSQL 16, production settings refuse a placeholder secret |
-| **Docker image** | Builds the image on pull requests (not pushed). On merge to `main`, pushes it to Docker Hub as `latest` and `sha-<commit>` |
+| **Docker image (build check)** | Builds the production image to prove the Dockerfile works |
 
-Each job runs only if the previous one passed, so a broken build never reaches Docker Hub.
+Each job runs only if the previous one passed.
 
-Setup, once, in the GitHub repository (**Settings → Secrets and variables → Actions**):
+**`release.yml` – merge to `main`** (and version tags)
+
+Builds the image and pushes it to Docker Hub as `latest` and `sha-<commit>`. Pushing a tag such as
+`v1.2.0` also publishes `1.2.0` and `1.2`. A first step checks the credentials and names any that
+are missing. The job runs in a `production` environment, where you can add required reviewers
+(**Settings → Environments**) if releases should need approval.
+
+Setup, once (**Settings → Secrets and variables → Actions**):
 
 | Kind | Name | Value |
 |---|---|---|
@@ -99,8 +108,10 @@ Setup, once, in the GitHub repository (**Settings → Secrets and variables → 
 | Secret | `DOCKERHUB_TOKEN` | a Docker Hub access token (Account settings → Personal access tokens, Read & Write) |
 | Variable | `DOCKERHUB_REPOSITORY` | optional, defaults to `<username>/merci-portfolio-api` |
 
+Credentials must be **Secrets**, not Variables: variables are stored and shown in plain text.
+
 Recommended: in **Settings → Branches**, protect `main` and require the *Lint*, *Tests* and
-*Docker image* checks before merging.
+*Docker image (build check)* checks before merging.
 
 ## Deploy to a Hostinger server (Docker)
 
