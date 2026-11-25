@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 120
+max-complexity = 12
+# E203/W503 conflict with Black's formatting.
+extend-ignore = E203, W503
+extend-select = B
+# Patterns work whether flake8 runs from backend/ or the repo root (pre-commit).
+exclude =
+    .venv,
+    __pycache__,
+    */migrations/*,
+    staticfiles,
+    media
+per-file-ignores =
+    # Settings modules build on base with star imports by design.
+    */config/settings/*.py: F401, F403, F405
