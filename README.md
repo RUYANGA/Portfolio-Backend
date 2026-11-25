@@ -110,6 +110,9 @@ Setup, once (**Settings → Secrets and variables → Actions**):
 
 Credentials must be **Secrets**, not Variables: variables are stored and shown in plain text.
 
+**Dependabot** (`.github/dependabot.yml`) opens grouped pull requests every Monday for Python
+packages, GitHub Actions and the Docker base image; they go through CI like any other change.
+
 Recommended: in **Settings → Branches**, protect `main` and require the *Lint*, *Tests* and
 *Docker image (build check)* checks before merging.
 
