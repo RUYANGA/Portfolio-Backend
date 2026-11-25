@@ -1,0 +1,74 @@
+# Code-quality hooks. The same checks run locally before each commit and in CI
+# (.github/workflows/ci.yml).
+#
+#   pip install -r requirements-dev.txt
+#   pre-commit install                 # run on every commit
+#   pre-commit run --all-files         # run on everything now
+#
+# Tool settings live in pyproject.toml (black, isort, mypy) and .flake8.
+
+default_language_version:
+  python: python3.12
+exclude: ^(seed/media/|staticfiles/|media/)
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: detect-private-key
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (import order)
+        exclude: /migrations/
+
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.10.0
+    hooks:
+      - id: black
+        name: black (formatting)
+        exclude: /migrations/
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        name: flake8 (lint)
+        additional_dependencies: [flake8-bugbear==24.10.31]
+        exclude: /migrations/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        name: mypy (types)
+        # Settings come from pyproject.toml; check the whole project, not just changed files,
+        # so cross-module type errors are caught.
+        args: []
+        pass_filenames: false
+        files: ^(src/|pyproject\.toml)
+        additional_dependencies:
+          - django-stubs==5.1.1
+          - django-stubs-ext==5.1.1
+          - djangorestframework-stubs==3.15.1
+          # The Django plugin loads the settings, so it needs what they import.
+          - Django==5.1.4
+          - djangorestframework==3.15.2
+          - django-cors-headers==4.6.0
+          - dj-database-url==2.3.0
+          - psycopg[binary]==3.2.3  # when DATABASE_URL points at PostgreSQL
+          - python-dotenv==1.0.1
+          - whitenoise==6.8.2
+          - Pillow==11.0.0

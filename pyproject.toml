@@ -1,0 +1,43 @@
+# Tool configuration for the backend. (Flake8 reads .flake8; it doesn't support pyproject.toml.)
+
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+extend-exclude = '''
+/(
+    \.venv
+  | src/apps/[^/]+/migrations
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+src_paths = ["src"]
+known_first_party = ["apps", "config"]
+skip_glob = ["*/migrations/*", ".venv/*"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+files = ["src"]
+exclude = ["/migrations/"]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+# Sensible strictness for a typed-as-you-go codebase: check every function body,
+# flag mistakes, but don't demand annotations everywhere yet.
+check_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+# Third-party packages that ship no type information.
+[[tool.mypy.overrides]]
+module = ["dj_database_url.*", "corsheaders.*", "whitenoise.*"]
+ignore_missing_imports = true
