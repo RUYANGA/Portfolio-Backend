@@ -1,0 +1,15 @@
+# Secrets and local settings
+/.env
+/.env.*
+!/.env.example
+
+# Local state (anchored to the repo root, so seed/media/ is still tracked)
+/media/
+/staticfiles/
+/db.sqlite3
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
