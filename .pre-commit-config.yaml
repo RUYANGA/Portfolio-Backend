@@ -35,22 +35,22 @@ repos:
         exclude: /migrations/
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.10.0
+    rev: 26.10.1
     hooks:
       - id: black
         name: black (formatting)
         exclude: /migrations/
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.5.0
     hooks:
       - id: flake8
         name: flake8 (lint)
-        additional_dependencies: [flake8-bugbear==24.10.31]
+        additional_dependencies: [flake8-bugbear==26.11.22]
         exclude: /migrations/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v1.19.1
     hooks:
       - id: mypy
         name: mypy (types)
@@ -60,15 +60,15 @@ repos:
         pass_filenames: false
         files: ^(src/|pyproject\.toml)
         additional_dependencies:
-          - django-stubs==5.1.1
-          - django-stubs-ext==5.1.1
-          - djangorestframework-stubs==3.15.1
+          - django-stubs==5.2.9
+          - django-stubs-ext==5.2.9
+          - djangorestframework-stubs==3.16.9
           # The Django plugin loads the settings, so it needs what they import.
-          - Django==5.1.4
-          - djangorestframework==3.15.2
-          - django-cors-headers==4.6.0
-          - dj-database-url==2.3.0
-          - psycopg[binary]==3.2.3  # when DATABASE_URL points at PostgreSQL
-          - python-dotenv==1.0.1
-          - whitenoise==6.8.2
+          - Django==5.2.19
+          - djangorestframework==3.18.3
+          - django-cors-headers==4.9.0
+          - dj-database-url==3.1.2
+          - psycopg[binary]==3.3.9  # when DATABASE_URL points at PostgreSQL
+          - python-dotenv==1.2.4
+          - whitenoise==6.12.0
           - Pillow==11.0.0

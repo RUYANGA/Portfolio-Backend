@@ -10,9 +10,20 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
+    # Packages that must move together are grouped so their pins never conflict.
     groups:
+      django:
+        patterns: ["Django", "djangorestframework", "django-cors-headers", "django-stubs*", "djangorestframework-stubs"]
+      lint:
+        patterns: ["black", "isort", "flake8*", "mypy", "pre-commit"]
       python-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Stay on the Django 5.2 LTS line; major upgrades are done by hand.
+      - dependency-name: "Django"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "django-stubs*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
