@@ -61,7 +61,13 @@ class BookingApiTests(TestCase):
         data = self.client.get("/api/booking/").json()
         self.assertTrue(data["enabled"])
         self.assertEqual(data["timezone"], "Africa/Kigali")
-        self.assertEqual([t["slug"] for t in data["meeting_types"]], ["intro-call", "technical-discussion"])
+        slugs = [t["slug"] for t in data["meeting_types"]]
+        self.assertEqual(slugs[:2], ["intro-call", "technical-discussion"])
+        self.assertEqual(len(slugs), 9)
+        self.assertIn("job-interview", slugs)
+        self.assertEqual(
+            next(t for t in data["meeting_types"] if t["slug"] == "quick-question")["duration_minutes"], 15
+        )
 
     def test_slots_are_utc_and_respect_notice(self):
         slots = self.slots()
