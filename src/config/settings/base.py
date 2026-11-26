@@ -149,6 +149,9 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER or "noreply@localhost"
 CONTACT_NOTIFY_EMAIL = env("CONTACT_NOTIFY_EMAIL")
+# Public address of the Next.js site, e.g. https://merci.dev. The notification email links to
+# the dashboard inbox there. Defaults to the first CORS origin, which is usually the site.
+SITE_URL = (env("SITE_URL") or next(iter(CORS_ALLOWED_ORIGINS), "")).rstrip("/")
 EMAIL_BACKEND = (
     "django.core.mail.backends.smtp.EmailBackend" if EMAIL_HOST else "django.core.mail.backends.console.EmailBackend"
 )

@@ -4,13 +4,13 @@ import logging
 import os
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from apps.portfolio.emails import contact_notification
 from apps.portfolio.models import (
     Certification,
     ContactSubject,
@@ -93,12 +93,7 @@ class ContactView(APIView):
         notify = settings.CONTACT_NOTIFY_EMAIL or (Profile.objects.values_list("email", flat=True).first())
         if notify:
             try:
-                send_mail(
-                    subject=f"Portfolio message from {message.name}: {message.subject or 'New message'}",
-                    message=f"From: {message.name} <{message.email}>\n\n{message.message}",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[notify],
-                )
+                contact_notification(message, notify).send()
             except Exception:  # The message is already saved; email is a bonus.
                 logger.exception("Contact notification email failed")
 
