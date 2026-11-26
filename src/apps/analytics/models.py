@@ -12,6 +12,7 @@ class Hit(models.Model):
     created_at = models.DateTimeField(default=timezone.now, db_index=True)
     kind = models.CharField(max_length=5, choices=Kind.choices, default=Kind.VIEW)
     name = models.CharField(max_length=40, blank=True, help_text="Event name, e.g. cv_download.")
+    target = models.CharField(max_length=120, blank=True, help_text="Event detail: section, link host…")
     path = models.CharField(max_length=200)
     referrer = models.CharField(max_length=120, blank=True, help_text="Host of the referring site.")
     source = models.CharField(max_length=60, blank=True, help_text="utm_source, when the link had one.")
@@ -25,6 +26,8 @@ class Hit(models.Model):
     visitor = models.CharField(max_length=16, db_index=True, help_text="Daily-rotating anonymous hash.")
     session = models.CharField(max_length=32, blank=True, db_index=True)
     duration = models.PositiveIntegerField(default=0, help_text="Seconds spent on the page.")
+    scroll = models.PositiveSmallIntegerField(default=0, help_text="How far down the page they got, in %.")
+    returning = models.BooleanField(default=False, help_text="This browser had visited before.")
 
     class Meta:
         ordering = ["-created_at"]
