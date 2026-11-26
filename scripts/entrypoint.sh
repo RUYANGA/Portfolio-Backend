@@ -12,6 +12,17 @@ set -eu
 cd /app
 printf '\033[1;36m[start]\033[0m Version %s\n' "${APP_VERSION:-unknown}"
 
+# Uploaded files live in /app/media. Without a volume there, every redeploy deletes them.
+MEDIA_DIR=/app/media
+if grep -qs " $MEDIA_DIR " /proc/mounts; then
+  printf '\033[1;36m[start]\033[0m Media storage: persistent volume mounted at %s\n' "$MEDIA_DIR"
+else
+  printf '\033[1;33m[start] WARNING:\033[0m %s is not a mounted volume; uploads will be lost on redeploy.\n' "$MEDIA_DIR"
+fi
+if ! ( touch "$MEDIA_DIR/.write-test" && rm -f "$MEDIA_DIR/.write-test" ) 2>/dev/null; then
+  printf '\033[1;31m[start] ERROR:\033[0m %s is not writable by %s (uid %s); uploads will fail.\n' "$MEDIA_DIR" "$(id -un)" "$(id -u)"
+fi
+
 case "${1:-}" in
   ./scripts/start.sh | scripts/start.sh | /app/scripts/start.sh)
     exec "$@"
