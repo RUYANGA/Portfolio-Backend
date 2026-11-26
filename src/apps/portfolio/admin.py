@@ -6,6 +6,7 @@ from apps.portfolio.models import (
     ContactMessage,
     Education,
     Experience,
+    Lab,
     Profile,
     Project,
     SkillGroup,
@@ -115,6 +116,29 @@ class ProjectAdmin(admin.ModelAdmin):
     @admin.display(description="Current cover")
     def cover_preview(self, obj):
         return preview(obj.cover_image, 180)
+
+
+@admin.register(Lab)
+class LabAdmin(admin.ModelAdmin):
+    list_display = ["thumbnail", "title", "category", "provider", "completed", "order"]
+    list_display_links = ["thumbnail", "title"]
+    list_editable = ["order"]
+    list_filter = ["provider", "category"]
+    search_fields = ["title", "summary", "services"]
+    readonly_fields = ["diagram_preview"]
+    fieldsets = [
+        (None, {"fields": ["title", "category", "provider", "completed", "repo_url", "order"]}),
+        ("Architecture diagram", {"fields": ["diagram", "diagram_preview"]}),
+        ("Details", {"fields": ["summary", "highlights", "services"]}),
+    ]
+
+    @admin.display(description="")
+    def thumbnail(self, obj):
+        return preview(obj.diagram, 40)
+
+    @admin.display(description="Current diagram")
+    def diagram_preview(self, obj):
+        return preview(obj.diagram, 180)
 
 
 @admin.register(Education)

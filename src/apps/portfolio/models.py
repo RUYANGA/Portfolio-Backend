@@ -153,6 +153,26 @@ class Project(Ordered):
         return self.title
 
 
+class Lab(Ordered):
+    """A hands-on cloud lab: infrastructure built and deployed from a repository, shown in its own section."""
+
+    title = models.CharField(max_length=140, unique=True)
+    category = models.CharField(max_length=60, help_text="Short topic shown as a badge, e.g. Networking & security.")
+    provider = models.CharField(max_length=40, default="AWS", help_text="Cloud platform, e.g. AWS.")
+    summary = models.TextField(help_text="Two or three sentences: what was built and why.")
+    highlights = models.TextField(blank=True, help_text="One key outcome per line. The first three are shown.")
+    services = models.CharField(max_length=400, blank=True, help_text="Comma-separated, e.g. VPC, ALB, ECS Fargate")
+    repo_url = models.URLField(blank=True)
+    diagram = models.ImageField(upload_to="labs/", blank=True, help_text="Architecture diagram, shown on the card.")
+    completed = models.CharField(max_length=40, blank=True, help_text="As it should appear, e.g. Oct 2026")
+
+    class Meta(Ordered.Meta):
+        pass
+
+    def __str__(self):
+        return self.title
+
+
 class Education(Ordered):
     degree = models.CharField(max_length=160)
     institution = models.CharField(max_length=200)

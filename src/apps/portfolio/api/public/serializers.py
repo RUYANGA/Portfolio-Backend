@@ -9,6 +9,7 @@ from apps.portfolio.models import (
     ContactSubject,
     Education,
     Experience,
+    Lab,
     Profile,
     Project,
     SkillGroup,
@@ -127,6 +128,35 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def get_cover_image(self, obj):
         return absolute(self.context.get("request"), obj.cover_image)
+
+
+class LabSerializer(serializers.ModelSerializer):
+    highlights = serializers.SerializerMethodField()
+    services = serializers.SerializerMethodField()
+    diagram = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Lab
+        fields = [
+            "title",
+            "category",
+            "provider",
+            "summary",
+            "highlights",
+            "services",
+            "repo_url",
+            "diagram",
+            "completed",
+        ]
+
+    def get_highlights(self, obj):
+        return split_lines(obj.highlights)
+
+    def get_services(self, obj):
+        return split_commas(obj.services)
+
+    def get_diagram(self, obj):
+        return absolute(self.context.get("request"), obj.diagram)
 
 
 class EducationSerializer(serializers.ModelSerializer):
