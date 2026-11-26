@@ -28,6 +28,7 @@ class Profile(models.Model):
     about = models.TextField(blank=True, help_text="A more personal paragraph for the About section.")
     location = models.CharField(max_length=120, blank=True)
     email = models.EmailField()
+    secondary_email = models.EmailField(blank=True, help_text="Optional second address shown under the main email.")
     phone = models.CharField(max_length=40, blank=True)
     photo = models.ImageField(upload_to="profile/", blank=True)
     cv_file = models.FileField(upload_to="cv/", blank=True, help_text="PDF visitors can download.")

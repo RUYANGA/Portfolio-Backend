@@ -39,6 +39,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "about",
             "location",
             "email",
+            "secondary_email",
             "phone",
             "photo",
             "cv_file",

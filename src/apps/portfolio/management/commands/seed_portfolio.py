@@ -44,6 +44,7 @@ PROFILE_FIELDS = (
     "about",
     "location",
     "email",
+    "secondary_email",
     "phone",
     "available_for_work",
     "years_experience",

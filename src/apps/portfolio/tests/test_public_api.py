@@ -18,6 +18,7 @@ class PortfolioApiTests(SeedTestCase):
 
         self.assertEqual(data["profile"]["name"], SEED_DATA["profile"]["name"])
         self.assertEqual(data["profile"]["contact_heading"], SEED_DATA["profile"]["contact_heading"])
+        self.assertEqual(data["profile"]["secondary_email"], SEED_DATA["profile"]["secondary_email"])
         self.assertTrue(data["profile"]["cv_file"].startswith("http://"))
         self.assertTrue(all(c["image"].startswith("http://") for c in data["certifications"]))
         covers = [p["cover_image"] for p in data["projects"] if p["cover_image"]]
