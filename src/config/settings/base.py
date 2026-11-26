@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     # Local
     "apps.portfolio",
     "apps.booking",
+    "apps.analytics",
 ]
 
 MIDDLEWARE = [
@@ -152,6 +153,9 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER or "noreply@lo
 CONTACT_NOTIFY_EMAIL = env("CONTACT_NOTIFY_EMAIL")
 # Public address of the Next.js site, e.g. https://merci.dev. The notification email links to
 # the dashboard inbox there. Defaults to the first CORS origin, which is usually the site.
+# Shared secret between the Next.js site and this API for visitor analytics (any long random string,
+# set to the same value on both). Without it, analytics only works with DEBUG on.
+ANALYTICS_KEY = env("ANALYTICS_KEY")
 SITE_URL = (env("SITE_URL") or next(iter(CORS_ALLOWED_ORIGINS), "")).rstrip("/")
 EMAIL_BACKEND = (
     "django.core.mail.backends.smtp.EmailBackend" if EMAIL_HOST else "django.core.mail.backends.console.EmailBackend"

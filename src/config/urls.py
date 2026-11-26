@@ -5,9 +5,13 @@ from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.static import serve
 
+from apps.analytics import urls as analytics_urls
+
 urlpatterns: list[URLPattern | URLResolver] = [
+    path("api/admin/analytics/", include(analytics_urls.report)),
     path("api/admin/booking/", include("apps.booking.admin_urls")),
     path("api/admin/", include("apps.portfolio.api.admin.urls")),
+    path("api/analytics/", include(analytics_urls.collect)),
     path("api/booking/", include("apps.booking.urls")),
     path("api/", include("apps.portfolio.api.public.urls")),
 ]
