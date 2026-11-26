@@ -6,6 +6,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.static import serve
 
 urlpatterns: list[URLPattern | URLResolver] = [
+    path("api/admin/booking/", include("apps.booking.admin_urls")),
     path("api/admin/", include("apps.portfolio.api.admin.urls")),
     path("api/booking/", include("apps.booking.urls")),
     path("api/", include("apps.portfolio.api.public.urls")),

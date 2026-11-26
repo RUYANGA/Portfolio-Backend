@@ -1,12 +1,14 @@
 """Dashboard endpoints: overview, profile, CRUD + reorder for every content type, inbox."""
 
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import exceptions, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
+from apps.booking.models import Booking
 from apps.portfolio.models import (
     Certification,
     ContactMessage,
@@ -50,6 +52,9 @@ class OverviewView(AdminAPIView):
                     "certifications": Certification.objects.count(),
                     "messages": ContactMessage.objects.count(),
                     "unread_messages": ContactMessage.objects.filter(is_read=False).count(),
+                    "upcoming_bookings": Booking.objects.filter(
+                        status=Booking.Status.CONFIRMED, end__gte=timezone.now()
+                    ).count(),
                 },
                 "profile": {
                     "name": profile.name if profile else "",
