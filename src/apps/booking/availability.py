@@ -4,12 +4,14 @@ Free meeting slots: your weekly hours, minus busy time in your calendars and exi
 Busy time is read from each calendar's private iCal address (BOOKING_BUSY_CALENDARS), e.g. the
 Google Calendar "secret address in iCal format" and an Outlook "published calendar" ICS link.
 Recurring events are expanded; events marked free/transparent or cancelled are ignored.
-Each feed is cached for a few minutes. If a feed can't be read and no recent copy exists,
+Each feed is read again every minute (BOOKING_CALENDAR_REFRESH_SECONDS).
+If a feed can't be read and no recent copy exists,
 no slots are offered: refusing a booking is better than double-booking you.
 """
 
 import hashlib
 import logging
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -29,7 +31,6 @@ logger = logging.getLogger(__name__)
 UTC = dt_timezone.utc
 Interval = tuple[datetime, datetime]
 
-FRESH_SECONDS = 5 * 60  # re-read a calendar at most every 5 minutes
 STALE_SECONDS = 6 * 3600  # if a calendar is down, trust the last copy this long
 MAX_FEED_BYTES = 15 * 1024 * 1024
 MAX_RANGE_DAYS = 62
@@ -59,6 +60,29 @@ def feed_label(url: str) -> str:
 
 def _key(url: str, kind: str) -> str:
     return f"booking:feed:{kind}:{hashlib.sha256(url.encode()).hexdigest()[:24]}"
+
+
+def fresh_seconds() -> int:
+    """How long a calendar read is reused (BOOKING_CALENDAR_REFRESH_SECONDS, default 60)."""
+    return max(15, int(getattr(settings, "BOOKING_CALENDAR_REFRESH_SECONDS", 60)))
+
+
+def explain(exc: Exception) -> str:
+    """A reason the owner can act on, for the dashboard."""
+    if isinstance(exc, urllib.error.HTTPError):
+        if exc.code in (401, 403, 404, 410):
+            return (
+                f"The calendar refused the link (HTTP {exc.code}). It was probably reset or unpublished: "
+                "copy the current private iCal link into BOOKING_BUSY_CALENDARS and redeploy."
+            )
+        return f"The calendar server answered HTTP {exc.code}. It is usually temporary."
+    if isinstance(exc, urllib.error.URLError):
+        return f"The calendar server couldn't be reached ({exc.reason}). Check the link, or try again shortly."
+    if isinstance(exc, ValueError) and "unknown url type" in str(exc).lower():
+        return "The link isn't a valid URL. Check BOOKING_BUSY_CALENDARS for extra characters."
+    if isinstance(exc, TimeoutError):
+        return "The calendar took too long to answer. It is usually temporary."
+    return f"The calendar couldn't be read ({type(exc).__name__}: {exc})"[:300]
 
 
 def _fetch(url: str) -> bytes:
@@ -131,7 +155,7 @@ def _record_status(url: str, ok: bool, error: str = "", events: int = 0) -> None
 
 def feed_busy(url: str, horizon_end: datetime, owner_tz) -> list[Interval]:
     now = timezone.now()
-    for kind, max_age in (("fresh", FRESH_SECONDS), ("stale", STALE_SECONDS)):
+    for kind, max_age in (("fresh", fresh_seconds()), ("stale", STALE_SECONDS)):
         state: FeedState | None = cache.get(_key(url, kind))
         if state and state.horizon_end >= horizon_end and (now - state.fetched_at).total_seconds() <= max_age:
             if kind == "fresh":
@@ -142,13 +166,13 @@ def feed_busy(url: str, horizon_end: datetime, owner_tz) -> list[Interval]:
         intervals = parse_busy(_fetch(url), start, horizon_end, owner_tz)
     except Exception as exc:  # noqa: BLE001 - network, HTTP and parse errors all mean "unreadable"
         logger.warning("Busy calendar %s unreadable: %s", feed_label(url), exc)
-        _record_status(url, False, f"{type(exc).__name__}: {exc}"[:200])
+        _record_status(url, False, explain(exc))
         stale: FeedState | None = cache.get(_key(url, "stale"))
         if stale and stale.horizon_end >= horizon_end and (now - stale.fetched_at).total_seconds() <= STALE_SECONDS:
             return stale.intervals
         raise CalendarUnavailable(feed_label(url)) from exc
     state = FeedState(intervals=intervals, horizon_end=horizon_end, fetched_at=now)
-    cache.set(_key(url, "fresh"), state, FRESH_SECONDS)
+    cache.set(_key(url, "fresh"), state, fresh_seconds())
     cache.set(_key(url, "stale"), state, STALE_SECONDS)
     _record_status(url, True, events=len(intervals))
     return intervals

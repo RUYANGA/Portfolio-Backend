@@ -161,7 +161,14 @@ EMAIL_BACKEND = (
 # Private iCal addresses of the calendars whose busy time blocks bookings, comma-separated
 # (e.g. Google Calendar's "secret address in iCal format" and an Outlook published-calendar ICS
 # link). They are secrets: anyone with the link can read the calendar, so keep them in .env only.
-BOOKING_BUSY_CALENDARS = env_list("BOOKING_BUSY_CALENDARS")
+# Quotes and spaces pasted along with the links (common in hosting dashboards) are ignored.
+BOOKING_BUSY_CALENDARS = [
+    url.strip().strip("\"'").strip().replace("webcal://", "https://", 1)
+    for url in env_list("BOOKING_BUSY_CALENDARS")
+    if url.strip().strip("\"'").strip()
+]
+# How often each calendar is read again: changes appear on the booking page within this many seconds.
+BOOKING_CALENDAR_REFRESH_SECONDS = int(env("BOOKING_CALENDAR_REFRESH_SECONDS", "60"))
 
 # ---------- Logging (to stdout, so Docker collects it) ----------
 LOGGING = {

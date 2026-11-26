@@ -177,3 +177,51 @@ class AvailabilityTests(TestCase):
         self.config.timezone = "Mars/Olympus"
         with self.assertRaises(ValidationError):
             self.config.clean()
+
+
+class FeedRefreshAndErrorTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    @override_settings(BOOKING_BUSY_CALENDARS=[GOOGLE], BOOKING_CALENDAR_REFRESH_SECONDS=60)
+    def test_calendar_is_read_again_after_the_refresh_interval(self):
+        config = BookingSettings.load()
+        horizon = NOW + timedelta(days=40)
+        with feeds({GOOGLE: GOOGLE_FEED}) as fetch, mock.patch.object(availability.timezone, "now", return_value=NOW):
+            availability.calendar_busy(horizon, config.tz)
+            availability.calendar_busy(horizon, config.tz)  # within the minute: cached
+            self.assertEqual(fetch.call_count, 1)
+        with (
+            feeds({GOOGLE: GOOGLE_FEED}) as fetch,
+            mock.patch.object(availability.timezone, "now", return_value=NOW + timedelta(seconds=61)),
+        ):
+            availability.calendar_busy(horizon, config.tz)  # a minute later: read again
+            self.assertEqual(fetch.call_count, 1)
+
+    def test_refresh_interval_has_a_floor(self):
+        with override_settings(BOOKING_CALENDAR_REFRESH_SECONDS=1):
+            self.assertEqual(availability.fresh_seconds(), 15)
+        with override_settings(BOOKING_CALENDAR_REFRESH_SECONDS=300):
+            self.assertEqual(availability.fresh_seconds(), 300)
+
+    def test_errors_are_explained(self):
+        import urllib.error
+
+        gone = urllib.error.HTTPError(GOOGLE, 404, "Not Found", {}, None)  # type: ignore[arg-type]
+        self.assertIn("probably reset", availability.explain(gone))
+        busy_server = urllib.error.HTTPError(GOOGLE, 503, "x", {}, None)  # type: ignore[arg-type]
+        self.assertIn("temporary", availability.explain(busy_server))
+        self.assertIn("couldn't be reached", availability.explain(urllib.error.URLError("Name or service not known")))
+        self.assertIn("isn't a valid URL", availability.explain(ValueError("unknown url type: '\"https'")))
+
+    @override_settings(BOOKING_BUSY_CALENDARS=[GOOGLE])
+    def test_dashboard_status_carries_the_explanation(self):
+        import urllib.error
+
+        error = urllib.error.HTTPError(GOOGLE, 404, "Not Found", {}, None)  # type: ignore[arg-type]
+        with feeds({GOOGLE: error}), self.assertLogs("apps.booking.availability", "WARNING"):
+            with self.assertRaises(availability.CalendarUnavailable):
+                availability.calendar_busy(NOW + timedelta(days=5), BookingSettings.load().tz)
+        status = availability.feed_statuses()[0]
+        self.assertFalse(status["ok"])
+        self.assertIn("HTTP 404", status["error"])
