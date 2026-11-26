@@ -1,0 +1,23 @@
+{% autoescape off %}{% if cancel %}CANCELLED: {{ booking.title }}{% elif for_owner %}New booking: {{ booking.title }} with {{ booking.name }}{% else %}Confirmed: your {{ booking.title|lower }} with {{ owner }}{% endif %}
+{% if cancel %}
+{% if cancelled_by %}Cancelled by {{ cancelled_by }}. {% endif %}The event has been removed from the calendar.{% if booking.cancel_reason %}
+Reason: {{ booking.cancel_reason }}{% endif %}
+{% endif %}
+When:      {{ when.date }}, {{ when.time }}
+Time zone: {{ when.zone }}
+Where:     {% if meeting_link %}{{ meeting_link }}{% else %}{{ location }}{% endif %}
+{% if for_owner %}
+Guest:     {{ booking.name }} <{{ booking.email }}>{% if booking.company %}
+Company:   {{ booking.company }}{% endif %}{% if booking.visitor_timezone %}
+Their zone: {{ booking.visitor_timezone }}{% endif %}
+{% endif %}{% if booking.notes %}
+Agenda:
+{{ booking.notes }}
+{% endif %}
+{% if not cancel %}The calendar invitation is attached (invite.ics).{% if not for_owner %}
+Add to Google Calendar: {{ links.google }}
+Add to Outlook: {{ links.outlook }}{% if manage_url %}
+
+Can't make it? Cancel here: {{ manage_url }}{% endif %}{% endif %}{% endif %}{% if for_owner and inbox_url %}
+All bookings: {{ inbox_url }}{% endif %}
+{% endautoescape %}
