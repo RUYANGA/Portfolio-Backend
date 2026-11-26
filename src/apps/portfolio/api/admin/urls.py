@@ -11,6 +11,7 @@ router.register("social-links", views.SocialLinkAdminViewSet, basename="admin-so
 router.register("skill-groups", views.SkillGroupAdminViewSet, basename="admin-skill-groups")
 router.register("experiences", views.ExperienceAdminViewSet, basename="admin-experiences")
 router.register("projects", views.ProjectAdminViewSet, basename="admin-projects")
+router.register("labs", views.LabAdminViewSet, basename="admin-labs")
 router.register("education", views.EducationAdminViewSet, basename="admin-education")
 router.register("certifications", views.CertificationAdminViewSet, basename="admin-certifications")
 router.register("contact-subjects", views.ContactSubjectAdminViewSet, basename="admin-contact-subjects")

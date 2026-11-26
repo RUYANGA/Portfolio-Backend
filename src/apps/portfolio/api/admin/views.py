@@ -13,6 +13,7 @@ from apps.portfolio.models import (
     ContactSubject,
     Education,
     Experience,
+    Lab,
     Profile,
     Project,
     SkillGroup,
@@ -26,6 +27,7 @@ from .serializers import (
     ContactSubjectAdminSerializer,
     EducationAdminSerializer,
     ExperienceAdminSerializer,
+    LabAdminSerializer,
     ProfileAdminSerializer,
     ProjectAdminSerializer,
     SkillGroupAdminSerializer,
@@ -42,6 +44,7 @@ class OverviewView(AdminAPIView):
                     "projects": Project.objects.count(),
                     "featured_projects": Project.objects.filter(featured=True).count(),
                     "experiences": Experience.objects.count(),
+                    "labs": Lab.objects.count(),
                     "skill_groups": SkillGroup.objects.count(),
                     "education": Education.objects.count(),
                     "certifications": Certification.objects.count(),
@@ -121,6 +124,11 @@ class ExperienceAdminViewSet(AdminViewSet):
 class ProjectAdminViewSet(AdminViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectAdminSerializer
+
+
+class LabAdminViewSet(AdminViewSet):
+    queryset = Lab.objects.all()
+    serializer_class = LabAdminSerializer
 
 
 class EducationAdminViewSet(AdminViewSet):

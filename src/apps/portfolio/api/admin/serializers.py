@@ -14,6 +14,7 @@ from apps.portfolio.models import (
     ContactSubject,
     Education,
     Experience,
+    Lab,
     Profile,
     Project,
     SkillGroup,
@@ -147,6 +148,28 @@ class ProjectAdminSerializer(FileCleanupMixin, serializers.ModelSerializer):
             "problem",
             "approach",
             "stack",
+            "order",
+        ]
+
+
+class LabAdminSerializer(FileCleanupMixin, serializers.ModelSerializer):
+    highlights = JoinedListField(separator="\n", required=False)
+    services = JoinedListField(required=False)
+    diagram = image_field()
+
+    class Meta:
+        model = Lab
+        fields = [
+            "id",
+            "title",
+            "category",
+            "provider",
+            "completed",
+            "repo_url",
+            "diagram",
+            "summary",
+            "highlights",
+            "services",
             "order",
         ]
 

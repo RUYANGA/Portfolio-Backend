@@ -11,7 +11,7 @@ Modes:
 
 Records are matched on a natural key, so re-running never creates duplicates:
 profile (the single record), social link label, skill group name, role + company,
-project slug, degree, certification name, and contact subject label.
+project slug, lab title, degree, certification name, and contact subject label.
 """
 
 import json
@@ -28,13 +28,14 @@ from apps.portfolio.models import (
     ContactSubject,
     Education,
     Experience,
+    Lab,
     Profile,
     Project,
     SkillGroup,
     SocialLink,
 )
 
-CONTENT_MODELS = (SocialLink, Profile, SkillGroup, Experience, Project, Education, Certification, ContactSubject)
+CONTENT_MODELS = (SocialLink, Profile, SkillGroup, Experience, Project, Lab, Education, Certification, ContactSubject)
 
 PROFILE_FIELDS = (
     "name",
@@ -99,6 +100,7 @@ class Command(BaseCommand):
             self.seed_skill_groups()
             self.seed_experiences()
             self.seed_projects()
+            self.seed_labs()
             self.seed_education()
             self.seed_certifications()
             self.seed_contact_subjects()
@@ -179,6 +181,25 @@ class Command(BaseCommand):
                     "order": i,
                 },
                 files={"cover_image": pr.get("cover_image")},
+            )
+
+    def seed_labs(self):
+        for i, lab in enumerate(self.data.get("labs", [])):
+            self._upsert(
+                Lab,
+                "labs",
+                {"title": lab["title"]},
+                {
+                    "category": lab["category"],
+                    "provider": lab.get("provider", "AWS"),
+                    "summary": lab["summary"],
+                    "highlights": "\n".join(lab.get("highlights", [])),
+                    "services": ", ".join(lab.get("services", [])),
+                    "repo_url": lab.get("repo_url", ""),
+                    "completed": lab.get("completed", ""),
+                    "order": i,
+                },
+                files={"diagram": lab.get("diagram")},
             )
 
     def seed_education(self):
