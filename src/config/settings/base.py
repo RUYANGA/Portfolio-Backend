@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     # Local
     "apps.portfolio",
+    "apps.booking",
 ]
 
 MIDDLEWARE = [
@@ -155,6 +156,12 @@ SITE_URL = (env("SITE_URL") or next(iter(CORS_ALLOWED_ORIGINS), "")).rstrip("/")
 EMAIL_BACKEND = (
     "django.core.mail.backends.smtp.EmailBackend" if EMAIL_HOST else "django.core.mail.backends.console.EmailBackend"
 )
+
+# ---------- Meeting booking ----------
+# Private iCal addresses of the calendars whose busy time blocks bookings, comma-separated
+# (e.g. Google Calendar's "secret address in iCal format" and an Outlook published-calendar ICS
+# link). They are secrets: anyone with the link can read the calendar, so keep them in .env only.
+BOOKING_BUSY_CALENDARS = env_list("BOOKING_BUSY_CALENDARS")
 
 # ---------- Logging (to stdout, so Docker collects it) ----------
 LOGGING = {
