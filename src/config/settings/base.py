@@ -133,7 +133,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = env_list("CORS_ALLOWED_ORIGIN_REGEXES")
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
-    "DEFAULT_THROTTLE_RATES": {"contact": "5/hour", "admin_login": "20/hour"},
+    "DEFAULT_THROTTLE_RATES": {"contact": "5/hour", "admin_login": "20/hour", "booking": "5/hour"},
 }
 
 # The admin dashboard lives in the Next.js app and talks to /api/admin/.
