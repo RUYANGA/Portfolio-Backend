@@ -93,9 +93,7 @@ class LabAdminApiTests(SeedTestCase):
 
     def api(self, method, url, data=None):
         body = json.dumps(data) if data is not None else None
-        return getattr(self.client, method)(
-            f"/api/admin/{url}", body, content_type="application/json", **self.auth
-        )
+        return getattr(self.client, method)(f"/api/admin/{url}", body, content_type="application/json", **self.auth)
 
     def test_lab_crud_with_list_fields(self):
         res = self.api(
