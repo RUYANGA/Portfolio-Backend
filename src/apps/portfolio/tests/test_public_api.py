@@ -31,6 +31,11 @@ class DeploymentTests(SeedTestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["status"], "ok")
 
+    def test_health_endpoint_reports_media_storage(self):
+        media = self.client.get("/api/health/").json()["media"]
+        self.assertEqual(set(media), {"persistent", "writable"})
+        self.assertTrue(media["writable"])
+
     def test_health_endpoint_reports_the_running_version(self):
         with mock.patch.dict(os.environ, {"APP_VERSION": "307c316abcdef0123456"}):
             self.assertEqual(self.client.get("/api/health/").json()["version"], "307c316abcde")

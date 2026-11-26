@@ -102,6 +102,17 @@ class ContactView(APIView):
         return Response({"detail": "Message sent."}, status=status.HTTP_201_CREATED)
 
 
+def media_storage() -> dict[str, bool]:
+    """Whether uploads survive a redeploy (MEDIA_ROOT is its own mount) and can be written."""
+    root = str(settings.MEDIA_ROOT)
+    try:
+        with open("/proc/mounts", encoding="utf-8") as mounts:
+            persistent = any(line.split()[1] == root for line in mounts if len(line.split()) > 1)
+    except OSError:
+        persistent = False
+    return {"persistent": persistent, "writable": os.access(root, os.W_OK)}
+
+
 class HealthView(APIView):
     """
     Liveness/readiness probe for Docker and uptime monitors: checks the database too.
@@ -116,4 +127,4 @@ class HealthView(APIView):
                 cursor.execute("SELECT 1")
         except Exception:  # noqa: BLE001 - any DB failure means not ready
             return Response({"status": "error", "database": "unreachable"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        return Response({"status": "ok", "version": os.getenv("APP_VERSION", "dev")[:12]})
+        return Response({"status": "ok", "version": os.getenv("APP_VERSION", "dev")[:12], "media": media_storage()})
