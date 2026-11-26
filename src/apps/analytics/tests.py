@@ -131,6 +131,7 @@ class ReportTests(ReportCase):
         self.assertEqual(sum(data["hours"]), 3)
         self.assertEqual(data["live"]["visitors"], 0)
         self.assertNotIn("visitor", data["sessions"][0])
+        self.assertNotIn("visitor", data["recent"][0])
         self.assertEqual(sum(map(sum, data["heatmap"])), 3)
 
     def test_live_visitors_and_hourly_today(self):

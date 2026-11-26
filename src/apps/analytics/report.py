@@ -384,8 +384,15 @@ def build(days: int, tz: ZoneInfo, filters: dict[str, str]) -> dict[str, Any]:
         "hours": [sum(day[hour] for day in grid) for hour in range(24)],
         "weekdays": [sum(day) for day in grid],
         "sessions": journeys(visits),
+        "recent": recent(visits),  # used by dashboards older than the journeys view
         "live": live(now),
     }
+
+
+def recent(visits: list[Visit]) -> list[dict[str, Any]]:
+    keys = ("created_at", "path", "country", "city", "device", "browser", "os", "referrer", "duration")
+    views = sorted(all_views(visits), key=lambda v: v["created_at"], reverse=True)[:25]
+    return [{k: v[k] for k in keys} for v in views]
 
 
 def _counts(row: dict[str, Any]) -> dict[str, int]:
