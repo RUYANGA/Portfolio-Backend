@@ -105,11 +105,14 @@ def build_ics(
         event.add("attendee", attendee, encode=0)
 
     if not cancel:
-        alarm = Alarm()
-        alarm.add("action", "DISPLAY")
-        alarm.add("description", f"{booking.title} with {booking.name}")
-        alarm.add("trigger", timedelta(minutes=-15))
-        event.add_component(alarm)
+        # A pop-up at each reminder time. Apple Calendar, Thunderbird and others use these; Google
+        # Calendar and Outlook apply their own default notifications, so reminder emails are sent too.
+        for minutes in sorted(set(config.reminder_minutes or []), reverse=True):
+            alarm = Alarm()
+            alarm.add("action", "DISPLAY")
+            alarm.add("description", f"{booking.title} with {booking.name} starts in {lead_text(minutes)}")
+            alarm.add("trigger", timedelta(minutes=-minutes))
+            event.add_component(alarm)
 
     calendar.add_component(event)
     return calendar.to_ical()
@@ -163,7 +166,16 @@ def calendar_links(booking: Booking, config: BookingSettings, owner: str) -> dic
     return {"google": google, "outlook": outlook}
 
 
-def _message(subject, to, reply_to, template_context, ics: bytes, cancel: bool) -> EmailMultiAlternatives:
+def lead_text(minutes: int) -> str:
+    """1440 -> "1 day", 90 -> "1 hour 30 minutes", 15 -> "15 minutes"."""
+    days, rest = divmod(round(minutes), 1440)
+    hours, mins = divmod(rest, 60)
+    parts = [(days, "day"), (hours, "hour"), (mins, "minute")]
+    text = " ".join(f"{n} {unit}{'s' if n != 1 else ''}" for n, unit in parts if n)
+    return text or "less than a minute"
+
+
+def _message(subject, to, reply_to, template_context, ics: bytes | None, cancel: bool) -> EmailMultiAlternatives:
     owner = template_context["owner"]
     email = EmailMultiAlternatives(
         subject=subject,
@@ -177,6 +189,8 @@ def _message(subject, to, reply_to, template_context, ics: bytes, cancel: bool) 
         reply_to=reply_to,
     )
     email.attach_alternative(render_to_string("booking/emails/booking.html", template_context), "text/html")
+    if ics is None:  # reminders: the event is already in the calendar
+        return email
     method = "CANCEL" if cancel else "REQUEST"
     # As an alternative part, Gmail and Outlook show RSVP-style controls and add the event;
     # as an attachment, any other calendar app can import it.
@@ -185,13 +199,8 @@ def _message(subject, to, reply_to, template_context, ics: bytes, cancel: bool) 
     return email
 
 
-def booking_emails(booking: Booking, cancel: bool = False, cancelled_by: str = "") -> list[EmailMultiAlternatives]:
-    """The visitor's confirmation and your notification (or both cancellations), with the invitation."""
-    config = BookingSettings.load()
-    owner = owner_name()
-    owners = owner_addresses(config)
-    ics = build_ics(booking, config, owner, owners, cancel=cancel)
-    base = {
+def _context(booking: Booking, config: BookingSettings, owner: str, cancel: bool, cancelled_by: str = "") -> dict:
+    return {
         "booking": booking,
         "owner": owner,
         "cancel": cancel,
@@ -204,6 +213,15 @@ def booking_emails(booking: Booking, cancel: bool = False, cancelled_by: str = "
         "site_host": site_url().split("://")[-1],
         "links": calendar_links(booking, config, owner),
     }
+
+
+def booking_emails(booking: Booking, cancel: bool = False, cancelled_by: str = "") -> list[EmailMultiAlternatives]:
+    """The visitor's confirmation and your notification (or both cancellations), with the invitation."""
+    config = BookingSettings.load()
+    owner = owner_name()
+    owners = owner_addresses(config)
+    ics = build_ics(booking, config, owner, owners, cancel=cancel)
+    base = _context(booking, config, owner, cancel, cancelled_by)
     visitor_when = _when(booking.start, booking.end, _zone(booking.visitor_timezone, config.tz))
     owner_when = _when(booking.start, booking.end, config.tz)
     prefix = "Cancelled" if cancel else "Confirmed"
@@ -231,6 +249,41 @@ def booking_emails(booking: Booking, cancel: bool = False, cancelled_by: str = "
                 {**base, "for_owner": True, "when": owner_when},
                 ics,
                 cancel,
+            )
+        )
+    return messages
+
+
+def reminder_emails(booking: Booking, now: datetime) -> list[EmailMultiAlternatives]:
+    """ "Starts in 1 hour" emails: to you (every invitation address) and, if enabled, the guest."""
+    config = BookingSettings.load()
+    owner = owner_name()
+    owners = owner_addresses(config)
+    minutes = max(1, round((booking.start - now).total_seconds() / 60))
+    base = {**_context(booking, config, owner, cancel=False), "reminder": lead_text(minutes)}
+    messages = []
+    if owners:
+        when = _when(booking.start, booking.end, config.tz)
+        messages.append(
+            _message(
+                f"Reminder: {booking.title} with {booking.name} in {lead_text(minutes)} ({when['time'][:5]})",
+                owners,
+                [named(booking.name, booking.email)],
+                {**base, "for_owner": True, "when": when},
+                None,
+                False,
+            )
+        )
+    if config.remind_guest:
+        when = _when(booking.start, booking.end, _zone(booking.visitor_timezone, config.tz))
+        messages.append(
+            _message(
+                f"Reminder: {booking.title} with {owner} in {lead_text(minutes)} ({when['time'][:5]})",
+                [named(booking.name, booking.email)],
+                [named(owner, owners[0])] if owners else None,
+                {**base, "for_owner": False, "when": when},
+                None,
+                False,
             )
         )
     return messages

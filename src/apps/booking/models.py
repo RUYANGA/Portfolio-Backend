@@ -17,6 +17,25 @@ def default_weekly_hours():
     return {day: (workday if day not in ("sat", "sun") else []) for day in WEEKDAYS}
 
 
+# How long before a meeting reminders go out (minutes): a day before and an hour before.
+DEFAULT_REMINDERS = [1440, 60]
+MAX_REMINDER_MINUTES = 7 * 24 * 60
+
+
+def default_reminders():
+    return list(DEFAULT_REMINDERS)
+
+
+def validate_reminders(value) -> None:
+    if not isinstance(value, list) or len(value) > 5:
+        raise ValidationError("Choose up to five reminder times.")
+    for minutes in value:
+        if not isinstance(minutes, int) or isinstance(minutes, bool) or not 5 <= minutes <= MAX_REMINDER_MINUTES:
+            raise ValidationError("Each reminder must be between 5 minutes and 7 days before the meeting.")
+    if len(set(value)) != len(value):
+        raise ValidationError("Each reminder time can only be chosen once.")
+
+
 def parse_hhmm(value: str) -> time:
     hours, minutes = value.split(":")
     return time(int(hours), int(minutes))
@@ -48,6 +67,13 @@ class BookingSettings(models.Model):
         "(e.g. your Gmail and your Outlook work address).",
     )
     meeting_link = models.URLField(blank=True, help_text="Video call link added to every invitation.")
+    reminder_minutes = models.JSONField(
+        default=default_reminders,
+        blank=True,
+        validators=[validate_reminders],
+        help_text="Minutes before each meeting when reminders go out, e.g. [1440, 60]. Empty = none.",
+    )
+    remind_guest = models.BooleanField(default=True, help_text="Send the guest a reminder too.")
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -146,6 +172,9 @@ class Booking(models.Model):
     cancel_token = models.CharField(max_length=64, default=new_token, unique=True, editable=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     cancel_reason = models.CharField(max_length=300, blank=True)
+    reminders_sent = models.JSONField(
+        default=list, blank=True, help_text="Reminder times (minutes before) already handled for this booking."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

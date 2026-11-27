@@ -1,4 +1,4 @@
-{% autoescape off %}{% if cancel %}CANCELLED: {{ booking.title }}{% elif for_owner %}New booking: {{ booking.title }} with {{ booking.name }}{% else %}Confirmed: your {{ booking.title|lower }} with {{ owner }}{% endif %}
+{% autoescape off %}{% if reminder %}REMINDER: {{ booking.title }} with {% if for_owner %}{{ booking.name }}{% else %}{{ owner }}{% endif %} starts in {{ reminder }}{% elif cancel %}CANCELLED: {{ booking.title }}{% elif for_owner %}New booking: {{ booking.title }} with {{ booking.name }}{% else %}Confirmed: your {{ booking.title|lower }} with {{ owner }}{% endif %}
 {% if cancel %}
 {% if cancelled_by %}Cancelled by {{ cancelled_by }}. {% endif %}The event has been removed from the calendar.{% if booking.cancel_reason %}
 Reason: {{ booking.cancel_reason }}{% endif %}
@@ -14,7 +14,7 @@ Their zone: {{ booking.visitor_timezone }}{% endif %}
 Agenda:
 {{ booking.notes }}
 {% endif %}
-{% if not cancel %}The calendar invitation is attached (invite.ics).{% if not for_owner %}
+{% if reminder %}{% if not for_owner and manage_url %}Can't make it? Cancel here: {{ manage_url }}{% endif %}{% elif not cancel %}The calendar invitation is attached (invite.ics).{% if not for_owner %}
 Add to Google Calendar: {{ links.google }}
 Add to Outlook: {{ links.outlook }}{% if manage_url %}
 
