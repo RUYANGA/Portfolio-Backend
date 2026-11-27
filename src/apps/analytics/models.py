@@ -26,6 +26,9 @@ class Hit(models.Model):
     visitor = models.CharField(max_length=16, db_index=True, help_text="Daily-rotating anonymous hash.")
     session = models.CharField(max_length=32, blank=True, db_index=True)
     duration = models.PositiveIntegerField(default=0, help_text="Seconds spent on the page.")
+    last_seen = models.DateTimeField(
+        null=True, blank=True, db_index=True, help_text="Last heartbeat while the page was open (live visitors)."
+    )
     scroll = models.PositiveSmallIntegerField(default=0, help_text="How far down the page they got, in %.")
     returning = models.BooleanField(default=False, help_text="This browser had visited before.")
 

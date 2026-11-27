@@ -14,6 +14,7 @@ from datetime import datetime, time, timedelta
 from typing import Any, Callable, Iterable
 from zoneinfo import ZoneInfo
 
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import Hit
@@ -25,7 +26,10 @@ ACTIONS = {"cv_download", "contact", "booking"}
 EXPLORE_EVENTS = {"lab_open", "project_open"}
 ENGAGED_SECONDS = 30
 ENGAGED_SCROLL = 50
-LIVE_WINDOW = timedelta(minutes=5)
+# A visitor is live while their page keeps sending heartbeats (every 15 s): three missed = gone.
+LIVE_WINDOW = timedelta(seconds=45)
+# Views from tracker versions without heartbeats count as live for 5 minutes (rollout only).
+LEGACY_LIVE_WINDOW = timedelta(minutes=5)
 FIELDS = (
     "created_at",
     "kind",
@@ -329,11 +333,43 @@ def heatmap(visits: list[Visit], tz: ZoneInfo) -> list[list[int]]:
 
 
 def live(now: datetime) -> dict[str, Any]:
+    """Who is on the site right now: one row per open visit, most recently active first."""
+    rows = (
+        Hit.objects.filter(kind=Hit.Kind.VIEW)
+        .filter(
+            Q(last_seen__gte=now - LIVE_WINDOW) | Q(last_seen__isnull=True, created_at__gte=now - LEGACY_LIVE_WINDOW)
+        )
+        .order_by("created_at")
+        .values(
+            "session",
+            "visitor",
+            "path",
+            "country",
+            "city",
+            "device",
+            "browser",
+            "source",
+            "referrer",
+            "created_at",
+            "last_seen",
+            "duration",
+        )
+    )
     latest: dict[str, Row] = {}
-    rows = Hit.objects.filter(kind=Hit.Kind.VIEW, created_at__gte=now - LIVE_WINDOW).order_by("created_at")
-    for row in rows.values("session", "visitor", "path", "country", "city", "device"):
-        latest[row["session"] or row["visitor"]] = {k: row[k] for k in ("path", "country", "city", "device")}
-    return {"visitors": len(latest), "pages": list(latest.values())[-10:]}
+    for row in rows:  # later views of the same visit replace earlier ones
+        latest[row["session"] or row["visitor"]] = {
+            "path": row["path"],
+            "country": row["country"],
+            "city": row["city"],
+            "device": row["device"],
+            "browser": row["browser"],
+            "source": row["source"] or row["referrer"] or "Direct",
+            "since": row["created_at"],
+            "seen": row["last_seen"] or row["created_at"],
+            "seconds": row["duration"],
+        }
+    pages = sorted(latest.values(), key=lambda p: p["seen"], reverse=True)
+    return {"visitors": len(pages), "pages": pages[:20], "at": now}
 
 
 def build(days: int, tz: ZoneInfo, filters: dict[str, str]) -> dict[str, Any]:

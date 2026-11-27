@@ -78,8 +78,9 @@ case "$MODE" in
   prod)
     prepare
     start_reminders
-    log "Starting gunicorn on 0.0.0.0:${PORT:-8000}"
-    exec gunicorn config.wsgi:application \
+    log "Starting gunicorn (Uvicorn workers: HTTP + live WebSocket) on 0.0.0.0:${PORT:-8000}"
+    exec gunicorn config.asgi:application \
+      --worker-class uvicorn_worker.UvicornWorker \
       --bind "0.0.0.0:${PORT:-8000}" \
       --workers "${WEB_CONCURRENCY:-3}" \
       --access-logfile - \

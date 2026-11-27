@@ -25,7 +25,7 @@ from rest_framework.views import APIView
 
 from apps.portfolio.api.admin.auth import AdminAPIView
 
-from . import report
+from . import live, report
 from .models import Hit
 
 MAX_DURATION = 30 * 60  # a tab left open overnight shouldn't count as hours of reading
@@ -113,16 +113,24 @@ class CollectView(APIView):
         data = request.data if isinstance(request.data, dict) else {}
         kind = data.get("type", "view")
 
-        if kind == "leave":  # time on the page and how far down it they got, sent as the visitor moves on
+        if kind in ("ping", "leave"):
+            # ping: every 15 s while the page is on screen, so live visitors and time on page are exact
+            # even when the final "leave" never arrives (phones often drop it).
+            # leave: the visitor hid the tab or moved on; they stop counting as live straight away.
             try:
                 seconds = min(MAX_DURATION, max(0, int(data.get("seconds", 0))))
                 scroll = min(100, max(0, int(data.get("scroll", 0))))
                 hit_id = int(data.get("id", 0))
             except (TypeError, ValueError):
                 return Response(status=400)
-            Hit.objects.filter(id=hit_id, session=text(data.get("session"), 32), kind=Hit.Kind.VIEW).update(
-                duration=seconds, scroll=Greatest("scroll", Value(scroll))
+            now = timezone.now()
+            updated = Hit.objects.filter(id=hit_id, session=text(data.get("session"), 32), kind=Hit.Kind.VIEW).update(
+                duration=Greatest("duration", Value(seconds)),
+                scroll=Greatest("scroll", Value(scroll)),
+                last_seen=now if kind == "ping" else now - report.LIVE_WINDOW,
             )
+            if updated and kind == "leave":
+                live.publish({"type": "leave", "id": hit_id})
             return Response(status=204)
 
         ua = text(data.get("ua"), 400)
@@ -154,11 +162,35 @@ class CollectView(APIView):
             language=text(data.get("language"), 8).split("-")[0].lower(),
             visitor=visitor_hash(text(data.get("ip"), 64), ua, now.date()),
             session=text(data.get("session"), 32),
+            last_seen=now if kind == "view" else None,
+        )
+        live.publish(
+            {
+                "type": kind,
+                "id": hit.id,
+                "at": now.isoformat(),
+                "path": hit.path,
+                "name": hit.name,
+                "target": hit.target,
+                "country": hit.country,
+                "city": hit.city,
+                "device": hit.device,
+                "browser": hit.browser,
+                "source": hit.source or hit.referrer,
+                "returning": hit.returning,
+            }
         )
         return Response({"id": hit.id}, status=201)
 
 
 # ---------- reporting ----------
+
+
+class LiveTicketView(AdminAPIView):
+    """A one-minute ticket for the dashboard's live WebSocket, and where to connect."""
+
+    def get(self, request):
+        return Response({"ticket": live.make_ticket(request.user.pk), "url": live.socket_url(request)})
 
 
 class AnalyticsReportView(AdminAPIView):
