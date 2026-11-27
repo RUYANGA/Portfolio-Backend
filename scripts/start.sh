@@ -53,6 +53,21 @@ prepare() {
   python manage.py ensure_superuser
 }
 
+# Meeting reminders: checked every minute in the background, restarted if it ever stops.
+# BOOKING_REMINDERS=false turns it off (e.g. when cron runs send_booking_reminders instead).
+start_reminders() {
+  case "$(setting BOOKING_REMINDERS true | tr '[:upper:]' '[:lower:]')" in
+    false|0|no|off) log "Meeting reminders off (BOOKING_REMINDERS)"; return ;;
+  esac
+  log "Starting meeting reminders (checked every minute)"
+  (
+    while true; do
+      python manage.py send_booking_reminders --loop 60 || log "Reminders stopped; restarting in 30s"
+      sleep 30
+    done
+  ) &
+}
+
 case "$MODE" in
   dev)
     prepare
@@ -62,6 +77,7 @@ case "$MODE" in
     ;;
   prod)
     prepare
+    start_reminders
     log "Starting gunicorn on 0.0.0.0:${PORT:-8000}"
     exec gunicorn config.wsgi:application \
       --bind "0.0.0.0:${PORT:-8000}" \
