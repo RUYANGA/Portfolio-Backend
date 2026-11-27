@@ -131,7 +131,8 @@ jobs:
             exit 0
           fi
           # Coolify pulls the image tagged latest (pushed above) and restarts the container.
-          curl --fail-with-body --silent --show-error --retry 3 --retry-delay 5 \
+          # Coolify 4.3+ only accepts POST on the deploy endpoint.
+          curl --fail-with-body --silent --show-error --retry 3 --retry-delay 5 --request POST \
             --header "Authorization: Bearer $TOKEN" "$WEBHOOK"
           echo
           echo "triggered=true" >> "$GITHUB_OUTPUT"
