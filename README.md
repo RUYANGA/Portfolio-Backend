@@ -149,7 +149,21 @@ On every start the container waits for the database, applies migrations, seeds m
 content (never overwriting dashboard edits) and creates the admin account if it's set.
 It refuses to start with a missing or placeholder `DJANGO_SECRET_KEY`.
 
-### Updating
+### Automatic deploys (Coolify)
+
+Every merge to main is deployed without pressing Redeploy: the Release workflow pushes the image,
+calls Coolify's deploy webhook, and waits until `/api/health/` reports the new commit (the run
+fails if it isn't live within 15 minutes). Set it up once:
+
+1. **Coolify →** your API resource **→ Webhooks**: copy the **Deploy Webhook** URL.
+2. **Coolify → Keys & Tokens → API tokens**: create a token with the **deploy** permission.
+3. **GitHub → Settings → Secrets and variables → Actions → New repository secret**:
+   `COOLIFY_WEBHOOK` (the URL) and `COOLIFY_TOKEN` (the token).
+4. Optional variable `API_HEALTH_URL` if the API isn't at `https://api.ruyanga.com/api/health/`.
+
+The resource must use the image tag `latest`. Without the secrets the workflow only warns.
+
+### Updating by hand
 
 With the image CI publishes (set `API_IMAGE=<username>/merci-portfolio-api:latest` in `.env`):
 
