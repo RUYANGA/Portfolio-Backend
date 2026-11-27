@@ -228,3 +228,39 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name}: {self.subject or self.message[:40]}"
+
+
+class Resume(models.Model):
+    """
+    The CV built in the dashboard (single record). `content` holds its sections as structured data
+    (see resume_pdf.py); publishing renders it to PDF, keeps a numbered version and makes that PDF
+    the site's CV.
+    """
+
+    content = models.JSONField(default=dict)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "CV"
+
+
+def resume_version_path(instance: "ResumeVersion", filename: str) -> str:
+    # A folder per version keeps a clean file name for visitors (Name_CV.pdf) and gives every
+    # publish a new URL, so browsers and caches never show an old copy.
+    return f"cv/v{instance.number}/{filename}"
+
+
+class ResumeVersion(models.Model):
+    """A published CV: the content it was made from and the PDF visitors downloaded."""
+
+    number = models.PositiveIntegerField(unique=True)
+    content = models.JSONField()
+    file = models.FileField(upload_to=resume_version_path)
+    note = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-number"]
+
+    def __str__(self):
+        return f"CV v{self.number}"

@@ -1,0 +1,158 @@
+{
+  "basics": {
+    "name": "Merci Ruyanga",
+    "title": "Backend Engineer | Full-Stack Developer",
+    "location": "Kigali, Rwanda",
+    "phone": "+250 780 905 910",
+    "email": "ruyangam15@gmail.com",
+    "website": "https://ruyanga.tech",
+    "github": "https://github.com/RUYANGA",
+    "linkedin": "https://linkedin.com/in/merci-ruyanga"
+  },
+  "summary": "Backend-focused Full-Stack Engineer with 5+ years of experience designing, building, and deploying production-grade web applications, including AI-powered backend services. Specialized in scalable backend architecture, microservices, event-driven systems with Apache Kafka, REST and GraphQL API development, and relational database design using Python (Django/FastAPI), Node.js, NestJS, PostgreSQL, MySQL, and Redis. Experienced across the full development lifecycle, from system design and secure authentication to cloud deployment on AWS and performance optimization, within Agile teams. Passionate about building reliable, secure, and high-performance systems.",
+  "competencies": [
+    "Scalable Backend Architecture & API Design (REST & GraphQL)",
+    "AI-Powered Backend Services & LLM Integration",
+    "Microservices & Event-Driven Architecture (Apache Kafka)",
+    "Relational Database Modeling & Query Optimization (PostgreSQL, MySQL)",
+    "Caching, Sessions & Queue Management with Redis",
+    "Secure Coding, Authentication & Role-Based Authorization (JWT, RBAC)",
+    "Real-Time Systems (WebSockets / Socket.io)",
+    "Cloud Deployment (AWS), Docker, Nginx & CI/CD Pipelines",
+    "Agile / Scrum Delivery"
+  ],
+  "skills": [
+    {"group": "Backend", "items": "Python (Django, FastAPI), Node.js, NestJS, REST APIs, GraphQL"},
+    {"group": "AI & Data Streaming", "items": "AI/LLM API integration, Apache Kafka, event-driven microservices"},
+    {"group": "Databases & Caching", "items": "PostgreSQL, MySQL, MongoDB, Redis, Prisma ORM"},
+    {"group": "Languages", "items": "Python, TypeScript, JavaScript (all expert), Java, Dart, C++"},
+    {"group": "Cloud & DevOps", "items": "AWS, Microsoft Azure, Docker, CI/CD, Nginx, Linux (Ubuntu), Hostinger, Coolify, Git/GitHub"},
+    {"group": "Frontend & Mobile", "items": "React.js, Next.js, Tailwind CSS, React Native, Flutter"},
+    {"group": "Security & Practices", "items": "JWT, RBAC, input validation, structured error handling, SOLID principles, Agile/Scrum"}
+  ],
+  "experience": [
+    {
+      "role": "Backend Engineer",
+      "company": "Binary Hub",
+      "location": "Kigali, Rwanda",
+      "period": "2023 – Present",
+      "bullets": [
+        "Develop backend features using Node.js and NestJS for internal and client-facing platforms.",
+        "Implement request validation layers, structured error handling, and standardized API responses.",
+        "Debug production issues and improve reliability through logging and monitoring improvements.",
+        "Collaborate with senior engineers on architecture reviews and refactoring efforts."
+      ]
+    },
+    {
+      "role": "Backend Engineer",
+      "company": "AmaliTech",
+      "location": "Kigali, Rwanda",
+      "period": "Sept 2025 – Aug 2026",
+      "bullets": [
+        "Designed and built AI-powered backend microservices in Python, integrating AI/LLM capabilities into production APIs.",
+        "Implemented event-driven communication between microservices with Apache Kafka for reliable, asynchronous processing.",
+        "Deployed and maintained backend services on AWS with containerized, CI/CD-driven release workflows.",
+        "Used Redis for caching, session management, and queueing to reduce latency and improve throughput.",
+        "Worked in an Agile/Scrum team, contributing to sprint planning, code reviews, and cross-functional delivery with product and QA."
+      ]
+    },
+    {
+      "role": "Full-Stack Intern",
+      "company": "SEVEN X",
+      "location": "Kigali, Rwanda",
+      "period": "Mar 2025 – May 2025",
+      "bullets": [
+        "Built high-performance web applications using Hono and Next.js, focused on backend service layers.",
+        "Designed scalable PostgreSQL database schemas supporting production workloads.",
+        "Developed and secured API endpoints with input validation and structured error handling.",
+        "Optimized service performance and ensured cross-platform responsiveness across web and mobile clients."
+      ]
+    },
+    {
+      "role": "Junior Backend Developer",
+      "company": "VIPI Transport",
+      "location": "Kigali, Rwanda",
+      "period": "Sept 2022 – 2023",
+      "bullets": [
+        "Designed and maintained RESTful APIs supporting daily transport operations.",
+        "Modeled and optimized PostgreSQL and MongoDB databases; reduced query latency via indexing and refactoring.",
+        "Implemented JWT-based authentication and role-based authorization systems.",
+        "Improved overall API throughput through query optimization and caching strategies."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "U-Caravan",
+      "subtitle": "B2B / B2C E-commerce Platform",
+      "link": "https://u-caravan.com",
+      "bullets": [
+        "Built a scalable marketplace serving both B2B and B2C customer flows.",
+        "Implemented real-time inventory tracking, dynamic pricing, and SEO-optimized product architecture."
+      ],
+      "tech": "Node.js, PostgreSQL, React"
+    },
+    {
+      "name": "Muruhongore250",
+      "subtitle": "Innovation Management System",
+      "link": "https://muruhongore250.ur.ac.rw",
+      "bullets": [
+        "Built the University of Rwanda’s innovation management platform, connecting innovators with funders, partner organizations, and incubation programs.",
+        "Engineered end-to-end project lifecycle workflows covering idea submission, review, funding applications, and progress tracking, with role-based access for each stakeholder type.",
+        "Enabled funding-opportunity and grant management, startup incubation, and ecosystem collaboration to support venture commercialization.",
+        "In production at the University of Rwanda, supporting its wider innovation and entrepreneurship ecosystem."
+      ],
+      "tech": "Node.js, NestJS, PostgreSQL, React"
+    },
+    {
+      "name": "HitamoSpace",
+      "subtitle": "Venue Management System",
+      "link": "https://hitamospace.ur.ac.rw",
+      "bullets": [
+        "Created a real-time venue booking system supporting multi-campus scheduling workflows.",
+        "In production at the University of Rwanda, handling concurrent booking requests across campuses."
+      ],
+      "tech": "Node.js, PostgreSQL, React"
+    },
+    {
+      "name": "INUMA",
+      "subtitle": "Local Mission & Request Flow Management System",
+      "link": "https://inuma.ur.ac.rw",
+      "bullets": [
+        "Built a comprehensive request-flow management system supporting the local mission (staff travel) workflow at the University of Rwanda.",
+        "Designed multi-step approval pipelines with role-based access control and audit trails for administrative accountability.",
+        "In production, serving University staff across multiple campuses."
+      ],
+      "tech": "Node.js, NestJS, PostgreSQL, React"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Computer Science",
+      "school": "University of Rwanda — Nyarugenge Campus",
+      "period": "",
+      "coursework": "Data Structures & Algorithms, Database Systems, Software Engineering, Web Development"
+    }
+  ],
+  "certifications": [
+    {"name": "AWS Certified Cloud Practitioner", "issuer": "", "year": ""},
+    {"name": "JavaScript Algorithms & Data Structures", "issuer": "", "year": "2025"},
+    {"name": "Pro JavaScript Backend Developer", "issuer": "", "year": "2024"},
+    {"name": "AI Career Essentials", "issuer": "", "year": "2024"}
+  ],
+  "extra": [
+    {
+      "title": "Engineering approach",
+      "bullets": [
+        "Clean, maintainable architecture guided by SOLID principles.",
+        "Secure-by-default authentication and authorization systems.",
+        "Performance-first database design with indexing, query analysis, and caching.",
+        "Loosely coupled microservices and event-driven design for resilience and scale.",
+        "Containerized, reproducible deployment workflows with Docker, CI/CD, and AWS."
+      ]
+    }
+  ],
+  "order": ["summary", "competencies", "skills", "experience", "projects", "education", "certifications", "extra"],
+  "hidden": [],
+  "titles": {}
+}

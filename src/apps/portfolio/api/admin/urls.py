@@ -3,7 +3,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from . import auth, views
+from . import auth, resume, views
 
 router = DefaultRouter(trailing_slash=True)
 router.include_root_view = False
@@ -24,5 +24,10 @@ urlpatterns = [
     path("auth/password/", auth.PasswordView.as_view(), name="admin-password"),
     path("overview/", views.OverviewView.as_view(), name="admin-overview"),
     path("profile/", views.ProfileAdminView.as_view(), name="admin-profile"),
+    path("resume/", resume.ResumeView.as_view(), name="admin-resume"),
+    path("resume/preview/", resume.ResumePreviewView.as_view(), name="admin-resume-preview"),
+    path("resume/publish/", resume.ResumePublishView.as_view(), name="admin-resume-publish"),
+    path("resume/import/", resume.ResumeImportView.as_view(), name="admin-resume-import"),
+    path("resume/versions/<int:number>/restore/", resume.ResumeRestoreView.as_view(), name="admin-resume-restore"),
     path("", include(router.urls)),
 ]
