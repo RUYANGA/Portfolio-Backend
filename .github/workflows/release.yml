@@ -111,7 +111,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
-    name: Deploy on Coolify
+    name: Deploy on Server
     runs-on: ubuntu-latest
     needs: publish
     # Version tags only publish an image; merges to main go live.
@@ -150,7 +150,7 @@ jobs:
               | python3 -c 'import json, sys; print(json.load(sys.stdin).get("version", ""))' 2>/dev/null || true)
             if [ "$live" = "$want" ]; then
               echo "Deployed: $HEALTH_URL reports $live"
-              echo "### Deployed \`$want\` on Coolify" >> "$GITHUB_STEP_SUMMARY"
+              echo "### Deployed \`$want\` on the server" >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
             echo "Waiting for $want (live: ${live:-not answering})"
