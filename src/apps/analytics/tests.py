@@ -1,12 +1,15 @@
 """Visitor analytics: collecting views/events from the site's server, and the dashboard report."""
 
+import asyncio
 import json
 from datetime import timedelta
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
+from apps.analytics import live, report
 from apps.analytics.models import Hit
 from apps.analytics.views import parse_user_agent
 
@@ -199,3 +202,83 @@ class AdvancedReportTests(ReportCase):
         self.assertTrue(journey["returning"])
         self.assertEqual(journey["steps"][0]["path"], "/")
         self.assertIn("contact", [step["name"] for step in journey["steps"]])
+
+
+@override_settings(ANALYTICS_KEY=KEY)
+class LiveTests(ReportCase):
+    """Heartbeats, exact live presence, live publishing, tickets and the WebSocket gate."""
+
+    def collect(self, **data):
+        body = {"type": "view", "path": "/", "ua": CHROME, "ip": "203.0.113.5", "session": "s1", **data}
+        return self.client.post(
+            "/api/analytics/collect/", json.dumps(body), content_type="application/json", HTTP_X_ANALYTICS_KEY=KEY
+        )
+
+    def test_heartbeats_keep_time_on_page_and_presence_exact(self):
+        hit_id = self.collect().json()["id"]
+        self.collect(type="ping", id=hit_id, seconds=15, scroll=30)
+        self.collect(type="ping", id=hit_id, seconds=30, scroll=20)
+        hit = Hit.objects.get()
+        self.assertEqual((hit.duration, hit.scroll), (30, 30))  # never goes backwards
+        self.assertEqual(report.live(timezone.now())["visitors"], 1)
+        self.collect(type="leave", id=hit_id, seconds=31, scroll=35)
+        self.assertEqual(report.live(timezone.now())["visitors"], 0)  # gone as soon as they leave
+        self.assertEqual(Hit.objects.get().duration, 31)
+
+    def test_presence_expires_without_heartbeats(self):
+        self.hit(ago=timedelta(seconds=10), last_seen=timezone.now() - timedelta(seconds=10), path="/book")
+        self.hit(ago=timedelta(minutes=2), last_seen=timezone.now() - timedelta(minutes=1), session="s2", visitor="v2")
+        live_now = report.live(timezone.now())
+        self.assertEqual(live_now["visitors"], 1)
+        self.assertEqual(live_now["pages"][0]["path"], "/book")
+
+    def test_views_and_events_are_published(self):
+        with mock.patch.object(live, "publish") as publish:
+            hit_id = self.collect(country="rw", city="Kigali").json()["id"]
+            self.collect(type="event", name="cv_download")
+            self.collect(type="ping", id=hit_id, seconds=5)
+            self.collect(type="leave", id=hit_id, seconds=6)
+        kinds = [call.args[0]["type"] for call in publish.call_args_list]
+        self.assertEqual(kinds, ["view", "event", "leave"])  # heartbeats aren't broadcast
+        self.assertEqual(publish.call_args_list[0].args[0]["city"], "Kigali")
+
+    def test_publish_sends_a_postgres_notification(self):
+        live.publish({"type": "view", "path": "/"})  # must not raise inside a transaction
+        live.publish({"type": "view", "path": "x" * 9000})  # too big: skipped, not an error
+
+    @override_settings(PUBLIC_URL="https://api.example.com")
+    def test_ticket_endpoint(self):
+        self.assertEqual(self.client.get("/api/admin/analytics/live-ticket/").status_code, 401)
+        data = self.client.get("/api/admin/analytics/live-ticket/", HTTP_AUTHORIZATION=self.token).json()
+        self.assertEqual(data["url"], "wss://api.example.com/ws/analytics/")
+        self.assertIsNotNone(live.ticket_user(data["ticket"]))
+        self.assertIsNone(live.ticket_user("forged"))
+
+    @override_settings(CORS_ALLOWED_ORIGINS=["https://www.ruyanga.com"], CORS_ALLOWED_ORIGIN_REGEXES=[], DEBUG=False)
+    def test_socket_rejects_other_sites_and_bad_tickets(self):
+        self.assertTrue(live.origin_allowed("https://www.ruyanga.com"))
+        self.assertFalse(live.origin_allowed("https://evil.example"))
+        self.assertFalse(live.origin_allowed(""))
+
+        sent = []
+
+        async def run(origin, ticket):
+            messages = iter([{"type": "websocket.connect"}])
+
+            async def receive():
+                return next(messages)
+
+            async def send(message):
+                sent.append(message)
+
+            scope = {
+                "type": "websocket",
+                "path": "/ws/analytics/",
+                "headers": [(b"origin", origin.encode())],
+                "query_string": f"ticket={ticket}".encode(),
+            }
+            await live.analytics_socket(scope, receive, send)
+
+        asyncio.run(run("https://evil.example", "anything"))
+        asyncio.run(run("https://www.ruyanga.com", "forged"))
+        self.assertEqual(sent, [{"type": "websocket.close", "code": 4403}] * 2)
