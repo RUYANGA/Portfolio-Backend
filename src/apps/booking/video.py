@@ -83,7 +83,7 @@ def _google_meet(booking: Booking, config: BookingSettings, owner: str) -> str |
     }
     url = (
         "https://www.googleapis.com/calendar/v3/calendars/"
-        f"{parse.quote(calendar_id, safe='')}/events?conferenceDataVersion=1&sendUpdates=none"
+        f"{parse.quote(calendar_id, safe='')}/events?conferenceDataVersion=1&sendUpdates=all"
     )
     data = _post_json(url, payload, {"Authorization": f"Bearer {token}"})
     link = data.get("hangoutLink")
