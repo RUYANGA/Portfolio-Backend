@@ -174,6 +174,21 @@ BOOKING_BUSY_CALENDARS = [
 # How often each calendar is read again: changes appear on the booking page within this many seconds.
 BOOKING_CALENDAR_REFRESH_SECONDS = int(env("BOOKING_CALENDAR_REFRESH_SECONDS", "60"))
 
+# --- Video meeting providers (optional) ---------------------------------------
+# Google Meet: create a Google Cloud OAuth client (Desktop) with Calendar API enabled, then obtain
+# a refresh token for the calendar owner. Set the calendar ID (usually the owner's email).
+GOOGLE_CALENDAR_CLIENT_ID = env("GOOGLE_CALENDAR_CLIENT_ID", "")
+GOOGLE_CALENDAR_CLIENT_SECRET = env("GOOGLE_CALENDAR_CLIENT_SECRET", "")
+GOOGLE_CALENDAR_REFRESH_TOKEN = env("GOOGLE_CALENDAR_REFRESH_TOKEN", "")
+GOOGLE_CALENDAR_ID = env("GOOGLE_CALENDAR_ID", "primary")
+
+# Microsoft Teams: Azure app registration with OnlineMeetings.ReadWrite.All application permission
+# and admin consent. MICROSOFT_USER_ID is the organizer's user id or UPN.
+MICROSOFT_TENANT_ID = env("MICROSOFT_TENANT_ID", "")
+MICROSOFT_CLIENT_ID = env("MICROSOFT_CLIENT_ID", "")
+MICROSOFT_CLIENT_SECRET = env("MICROSOFT_CLIENT_SECRET", "")
+MICROSOFT_USER_ID = env("MICROSOFT_USER_ID", "")
+
 # ---------- Logging (to stdout, so Docker collects it) ----------
 LOGGING = {
     "version": 1,

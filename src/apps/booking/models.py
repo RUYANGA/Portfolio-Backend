@@ -66,7 +66,13 @@ class BookingSettings(models.Model):
         help_text="Every address that should receive the calendar invitation, one per line "
         "(e.g. your Gmail and your Outlook work address).",
     )
-    meeting_link = models.URLField(blank=True, help_text="Video call link added to every invitation.")
+    meeting_link = models.URLField(blank=True, help_text="Default video call link added to every invitation.")
+    video_provider = models.CharField(
+        max_length=20,
+        choices=[("manual", "Manual link"), ("google_meet", "Google Meet"), ("microsoft_teams", "Microsoft Teams")],
+        default="manual",
+        help_text="How video calls are created for bookings.",
+    )
     reminder_minutes = models.JSONField(
         default=default_reminders,
         blank=True,
@@ -172,6 +178,8 @@ class Booking(models.Model):
     cancel_token = models.CharField(max_length=64, default=new_token, unique=True, editable=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     cancel_reason = models.CharField(max_length=300, blank=True)
+    meeting_link = models.URLField(blank=True, help_text="Video call link for this booking.")
+    meeting_provider = models.CharField(max_length=20, blank=True, help_text="Provider that created the video call.")
     reminders_sent = models.JSONField(
         default=list, blank=True, help_text="Reminder times (minutes before) already handled for this booking."
     )

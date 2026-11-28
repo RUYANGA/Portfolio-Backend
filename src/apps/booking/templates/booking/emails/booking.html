@@ -20,7 +20,7 @@
 </head>
 <body style="margin:0;padding:0;background:#f1f5ee;-webkit-text-size-adjust:100%;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
-    {% if reminder %}Starts in {{ reminder }}: {{ when.date }}, {{ when.time }} · {{ when.zone }}.{% elif cancel %}{{ booking.title }} on {{ when.date }} has been cancelled.{% elif for_owner %}{{ booking.name }}{% if booking.company %} ({{ booking.company }}){% endif %} booked {{ when.date }}, {{ when.time }}.{% else %}{{ when.date }}, {{ when.time }} · {{ when.zone }}. The invitation is in your calendar.{% endif %}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;
+    {% if reminder %}Starts in {{ reminder }}: {{ when.date }}, {{ when.time }} · {{ when.zone }}.{% elif cancel %}{{ booking.title }} on {{ when.date }} has been cancelled.{% elif for_owner %}{{ booking.name }}{% if booking.company %} ({{ booking.company }}){% endif %} booked {{ when.date }}, {{ when.time }}.{% else %}{{ when.date }}, {{ when.time }} · {{ when.zone }}. A calendar invitation is attached.{% endif %}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5ee;">
@@ -70,11 +70,11 @@
                       {% if reminder %}
                         {% if for_owner %}Your meeting is coming up. Replying to this email answers {{ booking.name }}.{% else %}Your meeting is coming up. See you soon, {{ booking.name }}.{% endif %}
                       {% elif cancel %}
-                        {% if cancelled_by %}Cancelled by {{ cancelled_by }}. {% endif %}The event has been removed from the calendar.
+                        {% if cancelled_by %}Cancelled by {{ cancelled_by }}. {% endif %}The calendar event has been cancelled.
                       {% elif for_owner %}
-                        It has been added to your calendars. Replying to this email answers {{ booking.name }}.
+                        A calendar invitation is attached. Replying to this email answers {{ booking.name }}.
                       {% else %}
-                        Thank you, {{ booking.name }}. A calendar invitation is attached, and it has been added to your calendar.
+                        Thank you, {{ booking.name }}. A calendar invitation is attached so you can add it to your calendar.{% if meeting_link %} Use the join button below at meeting time.{% endif %}
                       {% endif %}
                     </p>
                   </td>
@@ -152,8 +152,8 @@
                           {% if site_url %}<td class="btn" style="padding:0 0 10px;"><a href="{{ site_url }}/book" style="display:inline-block;padding:12px 22px;border-radius:10px;background:#47790e;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;text-align:center;">Book another time</a></td>{% endif %}
                         {% else %}
                           {% if meeting_link %}<td class="btn" style="padding:0 10px 10px 0;"><a href="{{ meeting_link }}" style="display:inline-block;padding:12px 22px;border-radius:10px;background:#47790e;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;text-align:center;">Join video call</a></td>{% endif %}
-                          {% if not reminder %}<td class="btn" style="padding:0 10px 10px 0;"><a href="{{ links.google }}" style="display:inline-block;padding:11px 18px;border-radius:10px;border:1px solid #ccd4c8;background:#ffffff;color:#1b2216;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">Google Calendar</a></td>
-                          <td class="btn" style="padding:0 0 10px;"><a href="{{ links.outlook }}" style="display:inline-block;padding:11px 18px;border-radius:10px;border:1px solid #ccd4c8;background:#ffffff;color:#1b2216;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">Outlook</a></td>{% endif %}
+                          {% if not reminder %}<td class="btn" style="padding:0 10px 10px 0;"><a href="{{ links.google }}" style="display:inline-block;padding:11px 18px;border-radius:10px;border:1px solid #ccd4c8;background:#ffffff;color:#1b2216;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">Add to Google Calendar</a></td>
+                          <td class="btn" style="padding:0 0 10px;"><a href="{{ links.outlook }}" style="display:inline-block;padding:11px 18px;border-radius:10px;border:1px solid #ccd4c8;background:#ffffff;color:#1b2216;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">Add to Outlook</a></td>{% endif %}
                         {% endif %}
                       </tr>
                     </table>

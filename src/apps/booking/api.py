@@ -22,8 +22,9 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .availability import CalendarUnavailable, available_slots, is_available
-from .invites import booking_emails
+from .invites import booking_emails, owner_name
 from .models import Booking, BookingSettings, MeetingType
+from .video import create_meeting_link
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def booking_payload(booking: Booking, config: BookingSettings) -> dict:
         "email": booking.email,
         "status": booking.status,
         "visitor_timezone": booking.visitor_timezone,
-        "meeting_link": config.meeting_link if booking.is_active else "",
+        "meeting_link": (booking.meeting_link or config.meeting_link) if booking.is_active else "",
         "can_cancel": booking.is_active and booking.start > timezone.now(),
         "manage_token": booking.cancel_token,
     }
@@ -145,6 +146,11 @@ class BookingView(APIView):
                     notes=data.get("notes", "").strip(),
                     visitor_timezone=data.get("timezone", ""),
                 )
+            meeting = create_meeting_link(booking, config, owner_name())
+            if meeting and meeting.url:
+                booking.meeting_link = meeting.url
+                booking.meeting_provider = meeting.provider
+                booking.save(update_fields=["meeting_link", "meeting_provider"])
         except CalendarUnavailable:
             return Response({"detail": UNAVAILABLE}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 

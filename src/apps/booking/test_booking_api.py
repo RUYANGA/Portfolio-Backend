@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from apps.booking import availability
+from apps.booking import availability, invites
 from apps.booking.models import WEEKDAYS, Booking, BookingSettings
 
 OWNER_CALENDARS = "me@gmail.com\nme@company.com"
@@ -87,6 +87,7 @@ class BookingApiTests(TestCase):
         self.assertEqual(booking.end - booking.start, timedelta(minutes=30))
         self.assertEqual(booking.visitor_timezone, "Europe/London")
         self.assertEqual(res.json()["meeting_link"], "https://meet.google.com/abc-defg-hij")
+        self.assertEqual(booking.meeting_link, "https://meet.google.com/abc-defg-hij")
 
         visitor, owner = mail.outbox
         self.assertEqual(visitor.to, ['"Sarah Mitchell" <sarah@northwind.io>'])
@@ -109,6 +110,7 @@ class BookingApiTests(TestCase):
         self.assertIn(f"https://portfolio.example.com/book/manage/{booking.cancel_token}", visitor_html)
         self.assertIn("calendar.google.com/calendar/render", visitor_html)
         self.assertIn("&lt;b&gt;on&lt;/b&gt;", visitor_html)
+        self.assertIn("calendar invitation is attached", visitor_html.lower())
         owner_html = part(owner, "text/html")
         self.assertIn("Northwind", owner_html)
         self.assertIn("https://portfolio.example.com/admin/bookings", owner_html)
