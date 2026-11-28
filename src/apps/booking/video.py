@@ -151,3 +151,65 @@ def create_meeting_link(booking: Booking, config: BookingSettings, owner: str) -
     if config.meeting_link:
         return VideoMeeting(url=config.meeting_link, provider="manual")
     return None
+
+
+GOOGLE_GUEST_SCOPE = "https://www.googleapis.com/auth/calendar.events"
+
+
+def _google_redirect_uri(request) -> str:
+    return request.build_absolute_uri("/api/booking/google/callback/")
+
+
+def google_connect_url(request, state: str) -> str | None:
+    client_id = getattr(settings, "GOOGLE_CALENDAR_CLIENT_ID", "")
+    if not client_id:
+        return None
+    params = {
+        "client_id": client_id,
+        "redirect_uri": _google_redirect_uri(request),
+        "response_type": "code",
+        "scope": GOOGLE_GUEST_SCOPE,
+        "access_type": "offline",
+        "prompt": "consent",
+        "include_granted_scopes": "true",
+        "state": state,
+    }
+    return "https://accounts.google.com/o/oauth2/v2/auth?" + parse.urlencode(params)
+
+
+def google_exchange_code(request, code: str) -> str | None:
+    client_id = getattr(settings, "GOOGLE_CALENDAR_CLIENT_ID", "")
+    client_secret = getattr(settings, "GOOGLE_CALENDAR_CLIENT_SECRET", "")
+    if not (client_id and client_secret and code):
+        return None
+    data = _post_form(
+        "https://oauth2.googleapis.com/token",
+        {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": _google_redirect_uri(request),
+        },
+    )
+    token = data.get("access_token")
+    return str(token) if token else None
+
+
+def insert_google_event_for_guest(booking: Booking, config: BookingSettings, owner: str, access_token: str) -> None:
+    link = booking.meeting_link or config.meeting_link
+    payload = {
+        "summary": f"{booking.title} with {owner}",
+        "description": booking.notes or f"Meeting booked through {owner}'s portfolio.",
+        "start": {"dateTime": booking.start.isoformat()},
+        "end": {"dateTime": booking.end.isoformat()},
+        "location": link or "Video call",
+        "attendees": [{"email": booking.email, "displayName": booking.name, "responseStatus": "accepted"}],
+    }
+    if link:
+        payload["description"] = (payload["description"] + f"\n\nJoin: {link}").strip()
+    _post_json(
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=none",
+        payload,
+        {"Authorization": f"Bearer {access_token}"},
+    )
