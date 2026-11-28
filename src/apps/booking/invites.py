@@ -56,8 +56,12 @@ def manage_url(booking: Booking) -> str:
     return f"{base}/book/manage/{booking.cancel_token}" if base else ""
 
 
-def location(config: BookingSettings) -> str:
-    return config.meeting_link or "Video call (the link will be sent before the meeting)"
+def meeting_link_for(booking: Booking, config: BookingSettings) -> str:
+    return booking.meeting_link or config.meeting_link
+
+
+def location(booking: Booking, config: BookingSettings) -> str:
+    return meeting_link_for(booking, config) or "Video call (the link will be shared before the meeting)"
 
 
 def build_ics(
@@ -77,16 +81,17 @@ def build_ics(
     event.add("dtstart", booking.start)
     event.add("dtend", booking.end)
     event.add("summary", f"{booking.title}: {booking.name} and {owner}")
-    event.add("location", location(config))
-    if config.meeting_link:
-        event.add("url", config.meeting_link)
+    link = meeting_link_for(booking, config)
+    event.add("location", location(booking, config))
+    if link:
+        event.add("url", link)
     details = [f"{booking.title} booked through {owner}'s portfolio."]
     if booking.company:
         details.append(f"Company: {booking.company}")
     if booking.notes:
         details.append(f"Agenda:\n{booking.notes}")
-    if config.meeting_link:
-        details.append(f"Join: {config.meeting_link}")
+    if link:
+        details.append(f"Join: {link}")
     if manage_url(booking):
         details.append(f"Need to cancel? {manage_url(booking)}")
     event.add("description", "\n\n".join(details))
@@ -141,13 +146,14 @@ def calendar_links(booking: Booking, config: BookingSettings, owner: str) -> dic
     stamp = "%Y%m%dT%H%M%SZ"
     start, end = booking.start.astimezone(ZoneInfo("UTC")), booking.end.astimezone(ZoneInfo("UTC"))
     title = f"{booking.title} with {owner}"
+    link = location(booking, config)
     google = "https://calendar.google.com/calendar/render?" + urlencode(
         {
             "action": "TEMPLATE",
             "text": title,
             "dates": f"{start:{stamp}}/{end:{stamp}}",
             "details": booking.notes,
-            "location": location(config),
+            "location": link,
         },
         quote_via=quote,
     )
@@ -157,7 +163,7 @@ def calendar_links(booking: Booking, config: BookingSettings, owner: str) -> dic
             "startdt": start.isoformat(),
             "enddt": end.isoformat(),
             "body": booking.notes,
-            "location": location(config),
+            "location": link,
             "path": "/calendar/action/compose",
             "rru": "addevent",
         },
@@ -200,13 +206,14 @@ def _message(subject, to, reply_to, template_context, ics: bytes | None, cancel:
 
 
 def _context(booking: Booking, config: BookingSettings, owner: str, cancel: bool, cancelled_by: str = "") -> dict:
+    link = meeting_link_for(booking, config)
     return {
         "booking": booking,
         "owner": owner,
         "cancel": cancel,
         "cancelled_by": cancelled_by,
-        "location": location(config),
-        "meeting_link": config.meeting_link,
+        "location": location(booking, config),
+        "meeting_link": link,
         "manage_url": manage_url(booking),
         "inbox_url": f"{site_url()}/admin/bookings" if site_url() else "",
         "site_url": site_url(),
