@@ -76,7 +76,7 @@ class BookingRequestSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=120)
     email = serializers.EmailField()
     company = serializers.CharField(max_length=120, required=False, allow_blank=True)
-    notes = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+    notes = serializers.CharField(max_length=2000)
     timezone = serializers.CharField(max_length=64, required=False, allow_blank=True)
     # Honeypot: hidden from people, filled in by bots.
     website = serializers.CharField(required=False, allow_blank=True)
@@ -91,6 +91,12 @@ class BookingRequestSerializer(serializers.Serializer):
         if len(value.strip()) < 2:
             raise serializers.ValidationError("Enter your name.")
         return value.strip()
+
+    def validate_notes(self, value):
+        text = value.strip()
+        if not text:
+            raise serializers.ValidationError("Please tell me what you'd like to discuss.")
+        return text
 
     def validate_timezone(self, value):
         try:
