@@ -132,6 +132,8 @@ class BookingAdminSerializer(serializers.ModelSerializer):
             "status",
             "cancelled_at",
             "cancel_reason",
+            "meeting_link",
+            "meeting_provider",
             "created_at",
         ]
         read_only_fields = fields
