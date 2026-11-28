@@ -139,7 +139,7 @@ class BookingAdminSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class BookingAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class BookingAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     permission_classes = AdminAPIView.permission_classes
     serializer_class = BookingAdminSerializer
@@ -156,6 +156,15 @@ class BookingAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
         if when == "cancelled":
             return bookings.filter(status=Booking.Status.CANCELLED).order_by("-cancelled_at")
         return bookings.order_by("-start")
+
+    def destroy(self, request, *args, **kwargs):
+        booking = self.get_object()
+        if booking.is_active and booking.end > timezone.now():
+            return Response(
+                {"detail": "Cancel this upcoming meeting before deleting it."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
