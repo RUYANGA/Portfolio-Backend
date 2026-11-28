@@ -101,13 +101,20 @@ def build_ics(
     organizer = vCalAddress(f"mailto:{organizer_address()}")
     organizer.params["cn"] = vText(owner)
     event["organizer"] = organizer
-    for name, address in [(owner, a) for a in attendees] + [(booking.name, booking.email)]:
+    for name, address in [(owner, a) for a in attendees]:
         attendee = vCalAddress(f"mailto:{address}")
         attendee.params["cn"] = vText(name)
         attendee.params["role"] = vText("REQ-PARTICIPANT")
         attendee.params["partstat"] = vText("ACCEPTED")
         attendee.params["rsvp"] = vText("FALSE")
         event.add("attendee", attendee, encode=0)
+    guest = vCalAddress(f"mailto:{booking.email}")
+    guest.params["cn"] = vText(booking.name)
+    guest.params["role"] = vText("REQ-PARTICIPANT")
+    guest.params["partstat"] = vText("NEEDS-ACTION")
+    guest.params["rsvp"] = vText("TRUE")
+    guest.params["CUTYPE"] = vText("INDIVIDUAL")
+    event.add("attendee", guest, encode=0)
 
     if not cancel:
         # A pop-up at each reminder time. Apple Calendar, Thunderbird and others use these; Google
@@ -183,8 +190,10 @@ def lead_text(minutes: int) -> str:
 
 def _message(subject, to, reply_to, template_context, ics: bytes | None, cancel: bool) -> EmailMultiAlternatives:
     owner = template_context["owner"]
+    method = "CANCEL" if cancel else "REQUEST"
+    subject_header = subject
     email = EmailMultiAlternatives(
-        subject=subject,
+        subject=subject_header,
         body=render_to_string("booking/emails/booking.txt", template_context),
         from_email=(
             settings.DEFAULT_FROM_EMAIL
@@ -194,14 +203,13 @@ def _message(subject, to, reply_to, template_context, ics: bytes | None, cancel:
         to=to,
         reply_to=reply_to,
     )
+    if ics is not None:
+        # Put text/calendar as the first alternative for better calendar-client handling.
+        email.attach_alternative(ics.decode(), f"text/calendar; method={method}; charset=UTF-8")
     email.attach_alternative(render_to_string("booking/emails/booking.html", template_context), "text/html")
-    if ics is None:  # reminders: the event is already in the calendar
-        return email
-    method = "CANCEL" if cancel else "REQUEST"
-    # As an alternative part, Gmail and Outlook show RSVP-style controls and add the event;
-    # as an attachment, any other calendar app can import it.
-    email.attach_alternative(ics.decode(), f"text/calendar; method={method}; charset=UTF-8")
-    email.attach("invite.ics", ics, f"application/ics; method={method}")
+    if ics is not None:
+        email.attach("invite.ics", ics, f"application/ics; method={method}")
+        email.extra_headers = {**getattr(email, "extra_headers", {}), "Content-class": "urn:content-classes:calendarmessage"}
     return email
 
 

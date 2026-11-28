@@ -104,6 +104,9 @@ class BookingApiTests(TestCase):
                 self.assertIn(f"mailto:{address}", ics.replace("\r\n ", ""))
             self.assertIn("BEGIN:VALARM", ics)
             self.assertEqual(message.attachments[0][0], "invite.ics")
+        visitor_ics = part(visitor, "text/calendar").replace("\r\n ", "")
+        self.assertIn("RSVP=TRUE", visitor_ics)
+        self.assertIn("PARTSTAT=NEEDS-ACTION", visitor_ics)
 
         visitor_html = part(visitor, "text/html")
         self.assertIn("Join video call", visitor_html)
